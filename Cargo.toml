@@ -1,0 +1,16 @@
+[package]
+name = "ecc-hypercube"
+version = "0.2.0"
+edition = "2021"
+authors = ["Tue Bui <bomot113@gmail.com>"]
+description = "Fast encoding and decoding of Reed-Muller error correcting codes based on hypercubes"
+license = "GPL-2.0-or-later"
+repository = "https://github.com/btue113/ECC-HyperCube"
+
+[[bin]]
+name = "cubecode"
+path = "src/main.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
