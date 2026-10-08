@@ -4,7 +4,7 @@ version = "0.2.0"
 edition = "2021"
 authors = ["Tue Bui <bomot113@gmail.com>"]
 description = "Fast encoding and decoding of Reed-Muller error correcting codes based on hypercubes"
-license = "GPL-2.0-or-later"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/btue113/ECC-HyperCube"
 
 [[bin]]
