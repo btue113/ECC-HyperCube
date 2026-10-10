@@ -2,7 +2,7 @@
 
 Fast encoding and decoding of Reed–Muller error correcting codes based on hypercubes.
 
-A Rust rewrite of the original 2013 C++ implementation (`github.com/bomot113/ECC-HyperCube`).
+A Rust rewrite of the original 2013 C++ implementation (see [History](#history)).
 It produces bit-for-bit identical results to the original on its sample input and on a
 randomized cross-check of 1,134 encode/decode jobs (RM codes with m = 2–15), and runs
 about 7× faster on that set. It has no dependencies.
@@ -78,6 +78,21 @@ cargo test --release
 Covers the original C++ unit tests, random round trips with up to the guaranteed
 number of bit errors, and a comparison against the C++ tool's recorded output.
 
+## History
+
+The idea started as a 2013 blog post on drawing Hamming codes as hypercubes, and became a C++
+program written between August 29 and October 1, 2013:
+[github.com/bomot113/ECC-HyperCube](https://github.com/bomot113/ECC-HyperCube).
+
+That repository is kept exactly as it was, as the dated record of the original work. It is no
+longer maintained (its author lost access to that account), it is licensed GPL-2.0-or-later, and
+its code is the unpolished 2013 version. **Use this repository instead:** it implements the same algorithm,
+is tested bit-for-bit against the 2013 program's output, and is licensed MIT OR Apache-2.0.
+
+The algorithm is explained with pictures in the blog series *Hamming codes on the hypercube*:
+[part 1](https://tuebui.com/2013/04/hamming-hypercube/) and
+[part 2](https://tuebui.com/2026/10/hamming-hypercube-part-2/).
+
 ## License
 
 Copyright (c) 2013-2026 Tue Bui.
@@ -90,8 +105,9 @@ Licensed under either of
 at your option.
 
 The original 2013 C++ implementation at `github.com/bomot113/ECC-HyperCube` was released under
-GPL-2.0-or-later and remains available under those terms. This Rust rewrite is relicensed by its
-author.
+GPL-2.0-or-later, and that code remains under those terms. This Rust rewrite is a new
+implementation by the same author and is licensed only as above; nothing in this repository is
+GPL-licensed.
 
 ### Contribution
 
