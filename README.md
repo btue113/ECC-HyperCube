@@ -93,6 +93,11 @@ The algorithm is explained with pictures in the blog series *Hamming codes on th
 [part 1](https://tuebui.com/2013/04/hamming-hypercube/) and
 [part 2](https://tuebui.com/2026/10/hamming-hypercube-part-2/).
 
+## Questions
+
+Ask in [Discussions → Q&A](https://github.com/btue113/ECC-HyperCube/discussions/categories/q-a),
+report bugs in [Issues](https://github.com/btue113/ECC-HyperCube/issues), or email hello@tuebui.com.
+
 ## License
 
 Copyright (c) 2013-2026 Tue Bui.
