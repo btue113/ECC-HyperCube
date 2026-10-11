@@ -90,8 +90,8 @@ its code is the unpolished 2013 version. **Use this repository instead:** it imp
 is tested bit-for-bit against the 2013 program's output, and is licensed MIT OR Apache-2.0.
 
 The algorithm is explained with pictures in the blog series *Hamming codes on the hypercube*:
-[part 1](https://tuebui.com/2013/04/hamming-hypercube/) and
-[part 2](https://tuebui.com/2026/10/hamming-hypercube-part-2/).
+[part 1](https://tuebui.com/intuitive-information/hamming-hypercube/) and
+[part 2](https://tuebui.com/intuitive-information/hamming-hypercube-part-2/).
 
 ## Questions
 
