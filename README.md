@@ -96,7 +96,7 @@ The algorithm is explained with pictures in the blog series *Hamming codes on th
 ## Questions
 
 Ask in [Discussions → Q&A](https://github.com/btue113/ECC-HyperCube/discussions/categories/q-a),
-report bugs in [Issues](https://github.com/btue113/ECC-HyperCube/issues), or email hello@tuebui.com.
+report bugs in [Issues](https://github.com/btue113/ECC-HyperCube/issues), or email contact@tuebui.com.
 
 ## License
 
