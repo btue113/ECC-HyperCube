@@ -1,6 +1,6 @@
 [package]
 name = "ecc-hypercube"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["Tue Bui <bomot113@gmail.com>"]
 description = "Fast encoding and decoding of Reed-Muller error correcting codes based on hypercubes"
@@ -10,6 +10,10 @@ repository = "https://github.com/btue113/ECC-HyperCube"
 [[bin]]
 name = "cubecode"
 path = "src/main.rs"
+
+[[bench]]
+name = "codec"
+harness = false
 
 [profile.release]
 lto = true

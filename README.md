@@ -3,9 +3,9 @@
 Fast encoding and decoding of Reed–Muller error correcting codes based on hypercubes.
 
 A Rust rewrite of the original 2013 C++ implementation (see [History](#history)).
-It produces bit-for-bit identical results to the original on its sample input and on a
-randomized cross-check of 1,134 encode/decode jobs (RM codes with m = 2–15), and runs
-about 7× faster on that set. It has no dependencies.
+It runs the same algorithm and produces bit-for-bit identical results to the original on
+its sample input and on a randomized cross-check of 1,134 encode/decode jobs (RM codes with
+m = 2–15), only faster (see [Speed](#speed)). It has no dependencies.
 
 ## How it works
 
@@ -15,12 +15,39 @@ an extra overall parity bit stands in for vertex 0, giving a block of `2^m` bits
 - **Unit cube** of `c`: all vertices that are supersets of `c`.
 - **Data bits** are the vertices with at least `m - r` ones; the rest are **parity bits**,
   each chosen so the XOR over its unit cube is zero.
-- **Decoding** goes level by level from the heaviest vertices down. Each data bit is
+- **Decoding** goes level by level, from the data vertices with the fewest ones (`m - r`) up to
+  the all-ones vertex. Each data bit is
   decided by a majority vote over `2^(m-r) - 1` cubes parallel to its unit cube, and
   the decided value is cancelled out of the received word before the next level.
 
 RM(r, m) has message length `k = C(m,0) + … + C(m,r)`, block length `n = 2^m` and corrects
 up to `2^(m-r-1) - 1` bit errors.
+
+## Speed
+
+The algorithm is the 2013 one: the same unit cubes, the same parallel cubes voting in the
+same order, the same majority and the same level-by-level cancellation. Three changes only
+make the arithmetic cheaper:
+
+- **All cube parities at once.** Encoding, the clean-word check, cancellation and the final
+  data recovery all need the XOR over many unit cubes. A superset XOR transform computes
+  every one of them in `O(m * 2^m)` steps instead of one cube at a time.
+- **64 bits per step when voting.** Consecutive vertices are packed into 64-bit words, so one
+  masked population count covers the lowest six dimensions of a voting cube.
+- **Shared voting patterns.** Which parallel cubes vote depends only on a vertex's weight, so
+  the pattern is stored once per weight; full cube lists are built only when the library's
+  `voters()` accessor asks for them.
+
+Compared with the plain port (tag `v0.2-plain-port`), single thread, microseconds per call
+(`cargo bench --bench codec`):
+
+| m, m−r−1 | init | encode | clean decode | noisy decode |
+| --- | --- | --- | --- | --- |
+| 8, 3 | 20.3 → 1.1 | 2.6 → 0.7 | 2.5 → 0.4 | 18.6 → 6.9 |
+| 12, 5 | 911 → 8.9 | 251 → 9.6 | 245 → 5.6 | 3,180 → 571 |
+| 15, 7 | 20,533 → 57 | 7,609 → 78 | 7,453 → 46 | 181,444 → 25,631 |
+
+The plain port itself ran about 7× faster than the 2013 C++ tool on the cross-check set.
 
 ## Build & run
 
@@ -77,6 +104,13 @@ cargo test --release
 
 Covers the original C++ unit tests, random round trips with up to the guaranteed
 number of bit errors, and a comparison against the C++ tool's recorded output.
+The reference tests also compare arbitrary received words beyond the correction
+bound, where preserving the original voting and cancellation rules matters.
+
+Run the dependency-free benchmark with `cargo bench --bench codec`. It reports
+initialization, encoding, clean decoding, and noisy decoding separately for small
+and large codes. Timings exclude string conversion and I/O; initialization includes
+dropping the codec, and operation timings reuse an initialized codec.
 
 ## History
 
