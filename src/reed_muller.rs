@@ -50,6 +50,18 @@ impl ReedMuller {
         }
         self.code.decode(&received[..received.len() - 1])
     }
+
+    pub fn decode_soft(&self, received: &[f64]) -> Result<Bits, Error> {
+        self.decode_soft_list(received, 8)
+    }
+
+    pub fn decode_soft_list(&self, received: &[f64], list_size: usize) -> Result<Bits, Error> {
+        if received.len() != self.block_len() {
+            return Err(Error::Length { expected: self.block_len(), got: received.len() });
+        }
+        let (&zero_llr, rest) = received.split_last().unwrap();
+        self.code.decode_soft_list_with_zero(rest, Some(zero_llr), list_size)
+    }
 }
 
 #[cfg(test)]
