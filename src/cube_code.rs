@@ -13,7 +13,7 @@
 
 use crate::hypercube::HyperCube;
 use crate::{Bits, Error};
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
 
 /// Hard cap that keeps the vertex tables comfortably within memory.
 pub const MAX_DIMS: u32 = 24;
@@ -32,6 +32,8 @@ pub struct CubeCode {
     voter_complements: Vec<Vec<u32>>,
     /// Materialized only when a caller requests the public cube view.
     voters: Vec<OnceLock<Vec<HyperCube>>>,
+    /// Reusable workspace for soft SCL decoding across calls.
+    scl_workspace: Mutex<Option<SclDecoder>>,
 }
 
 impl CubeCode {
@@ -85,6 +87,7 @@ impl CubeCode {
             cubes_in_level,
             voter_complements,
             voters,
+            scl_workspace: Mutex::new(None),
         })
     }
 
@@ -284,163 +287,219 @@ impl CubeCode {
             return Ok(hard[..self.data_len].to_vec());
         }
 
-        // Convert convention (`> 0` favors 1) to standard polar LLR (`> 0` favors 0): L = -y.
-        // Vertex 0 is punctured in standalone `CubeCode` (erasure: LLR = 0.0), or supplied by `ReedMuller`.
-        let n = 1usize << self.cw_dims;
-        let mut root_llrs = vec![0.0f64; n];
-        if let Some(z) = zero_vertex_llr {
-            root_llrs[0] = -z;
-        }
-        for (&y, &vertex) in received.iter().zip(&self.bit_to_cube) {
-            root_llrs[vertex as usize] = -y;
-        }
-
-        let min_data_weight = self.p_dims + 1;
-        let mut paths = vec![SclPath {
-            metric: 0.0,
-            partial_sums: Vec::with_capacity(n),
-            coefficients: vec![false; n],
-        }];
-
-        Self::scl_step(self.cw_dims, min_data_weight, 0, &[root_llrs], &mut paths, list_size);
-
-        let best = paths
-            .iter()
-            .min_by(|a, b| a.metric.total_cmp(&b.metric))
-            .unwrap();
-        let mut values = best.coefficients.clone();
-        superset_xor(&mut values);
+        // Reuse the cached SclDecoder workspace across calls, growing it only when `list_size` increases.
+        let mut guard = self.scl_workspace.lock().unwrap_or_else(|e| e.into_inner());
+        let decoder = guard.get_or_insert_with(|| SclDecoder::new(self.cw_dims, self.p_dims + 1, list_size));
+        decoder.prepare(list_size, &self.bit_to_cube, received, zero_vertex_llr);
+        let values = decoder.decode();
         Ok(self.bit_to_cube[..self.data_len]
             .iter()
             .map(|&v| values[v as usize])
             .collect())
     }
+}
 
-    fn scl_step(
-        dim: u32,
-        min_data_weight: u32,
-        offset: u32,
-        llrs: &[Vec<f64>],
-        paths: &mut Vec<SclPath>,
+#[derive(Debug)]
+struct SclDecoder {
+    dims: u32,
+    min_data_weight: u32,
+    list_size: usize,
+    active: usize,
+    metrics: Vec<f64>,
+    /// Flat LLR workspace: `list_size` paths, each holding `2 * n` f64s (level `d` starts at `(1 << d) - 1`).
+    llrs: Vec<f64>,
+    /// Flat partial-sums workspace: `list_size` paths, each holding `n` bools.
+    sums: Vec<bool>,
+    llr_stride: usize,
+    sum_stride: usize,
+    candidates: Vec<(f64, usize, bool)>,
+    parent_used: Vec<bool>,
+    deferred: Vec<usize>,
+}
+
+impl SclDecoder {
+    fn new(dims: u32, min_data_weight: u32, list_size: usize) -> Self {
+        let n = 1usize << dims;
+        let llr_stride = 2 * n;
+        let sum_stride = n;
+        Self {
+            dims,
+            min_data_weight,
+            list_size,
+            active: 1,
+            metrics: vec![0.0f64; list_size],
+            llrs: vec![0.0f64; list_size * llr_stride],
+            sums: vec![false; list_size * sum_stride],
+            llr_stride,
+            sum_stride,
+            candidates: Vec::with_capacity(list_size * 2),
+            parent_used: vec![false; list_size],
+            deferred: Vec::with_capacity(list_size),
+        }
+    }
+
+    fn prepare(
+        &mut self,
         list_size: usize,
-    ) -> Vec<usize> {
+        bit_to_cube: &[u32],
+        received: &[f64],
+        zero_vertex_llr: Option<f64>,
+    ) {
+        self.list_size = list_size;
+        if self.metrics.len() < list_size {
+            self.metrics.resize(list_size, 0.0);
+            self.llrs.resize(list_size * self.llr_stride, 0.0);
+            self.sums.resize(list_size * self.sum_stride, false);
+            self.parent_used.resize(list_size, false);
+        }
+        self.active = 1;
+        self.metrics[0] = 0.0;
+
+        // Convert convention (`> 0` favors 1) to standard polar LLR (`> 0` favors 0): L = -y.
+        // Vertex 0 is punctured in standalone `CubeCode` (erasure: LLR = 0.0), or supplied by `ReedMuller`.
+        let root_off = Self::llr_offset(self.dims);
+        self.llrs[root_off] = zero_vertex_llr.map_or(0.0, |z| -z);
+        for (&y, &vertex) in received.iter().zip(bit_to_cube) {
+            self.llrs[root_off + vertex as usize] = -y;
+        }
+    }
+
+    #[inline]
+    fn llr_offset(dim: u32) -> usize {
+        (1usize << dim) - 1
+    }
+
+    fn decode(&mut self) -> &[bool] {
+        self.step(self.dims, 0);
+        let best_idx = (0..self.active)
+            .min_by(|&a, &b| self.metrics[a].total_cmp(&self.metrics[b]))
+            .unwrap();
+        let start = best_idx * self.sum_stride;
+        &self.sums[start..start + self.sum_stride]
+    }
+
+    fn step(&mut self, dim: u32, offset: u32) {
         if dim == 0 {
-            let is_data = offset.count_ones() >= min_data_weight;
+            let v = offset as usize;
+            let is_data = offset.count_ones() >= self.min_data_weight;
             if !is_data {
-                // Frozen (parity) vertex: coefficient is fixed to 0.
-                for (path, path_llrs) in paths.iter_mut().zip(llrs) {
-                    let l = path_llrs[0];
-                    path.metric += scl_penalty(l, false);
-                    path.partial_sums.push(false);
+                for p in 0..self.active {
+                    let l = self.llrs[p * self.llr_stride];
+                    if l < 0.0 {
+                        self.metrics[p] -= l;
+                    }
+                    self.sums[p * self.sum_stride + v] = false;
                 }
-                return (0..paths.len()).collect();
+                return;
             }
 
-            // Data vertex: fork each path into coefficient = 0 (`false`) and 1 (`true`).
-            let mut candidates = Vec::with_capacity(paths.len() * 2);
-            for (idx, (path, path_llrs)) in paths.iter().zip(llrs).enumerate() {
-                let l = path_llrs[0];
-                candidates.push((path.metric + scl_penalty(l, false), idx, false));
-                candidates.push((path.metric + scl_penalty(l, true), idx, true));
+            // Data vertex: fork active paths into 0 (`false`) and 1 (`true`).
+            self.candidates.clear();
+            for p in 0..self.active {
+                let l = self.llrs[p * self.llr_stride];
+                let m = self.metrics[p];
+                let (m0, m1) = if l >= 0.0 { (m, m + l) } else { (m - l, m) };
+                self.candidates.push((m0, p, false));
+                self.candidates.push((m1, p, true));
             }
-            candidates.sort_unstable_by(|a, b| a.0.total_cmp(&b.0));
-            candidates.truncate(list_size);
+            if self.candidates.len() > self.list_size {
+                self.candidates
+                    .select_nth_unstable_by(self.list_size - 1, |a, b| a.0.total_cmp(&b.0));
+                self.candidates.truncate(self.list_size);
+            }
 
-            let mut next_paths = Vec::with_capacity(candidates.len());
-            let mut origins = Vec::with_capacity(candidates.len());
-            for (metric, idx, bit) in candidates {
-                let mut p = paths[idx].clone();
-                p.metric = metric;
-                p.partial_sums.push(bit);
-                p.coefficients[offset as usize] = bit;
-                next_paths.push(p);
-                origins.push(idx);
+            // Keep the first child of each surviving parent in-place in slot `parent`,
+            // and place second children into unused slots so we only copy on actual forks.
+            let new_active = self.candidates.len();
+            self.parent_used.fill(false);
+            self.deferred.clear();
+
+            for c_idx in 0..new_active {
+                let (metric, parent, bit) = self.candidates[c_idx];
+                if !self.parent_used[parent] {
+                    self.parent_used[parent] = true;
+                    self.metrics[parent] = metric;
+                    self.sums[parent * self.sum_stride + v] = bit;
+                } else {
+                    self.deferred.push(c_idx);
+                }
             }
-            *paths = next_paths;
-            return origins;
+
+            let mut free_slot = 0;
+            for d in 0..self.deferred.len() {
+                let (metric, parent, bit) = self.candidates[self.deferred[d]];
+                while self.parent_used[free_slot] {
+                    free_slot += 1;
+                }
+                self.parent_used[free_slot] = true;
+                self.metrics[free_slot] = metric;
+                // Copy the parent's full LLR tree (upper levels are still needed as recursion unwinds)
+                // and the partial sums computed so far (`0..v`).
+                let llr_src = parent * self.llr_stride;
+                let llr_dst = free_slot * self.llr_stride;
+                self.llrs.copy_within(llr_src..llr_src + self.llr_stride, llr_dst);
+
+                let sum_src = parent * self.sum_stride;
+                let sum_dst = free_slot * self.sum_stride;
+                if v > 0 {
+                    self.sums.copy_within(sum_src..sum_src + v, sum_dst);
+                }
+                self.sums[sum_dst + v] = bit;
+            }
+            self.active = new_active;
+            return;
         }
 
         let half = 1usize << (dim - 1);
-        let base_len = paths[0].partial_sums.len();
+        let parent_off = Self::llr_offset(dim);
+        let child_off = Self::llr_offset(dim - 1);
+        let base_v = offset as usize;
 
-        // 1. Left branch (lower half: bit `dim - 1` is 0): f(L_lower, L_upper) via Box-Plus.
-        let left_llrs: Vec<Vec<f64>> = llrs
-            .iter()
-            .map(|path_llrs| {
-                let (lower, upper) = path_llrs.split_at(half);
-                lower
-                    .iter()
-                    .zip(upper)
-                    .map(|(&l1, &l2)| box_plus(l1, l2))
-                    .collect()
-            })
-            .collect();
+        // 1. Left branch: min-sum Box-Plus f(l1, l2) = sign(l1)*sign(l2)*min(|l1|, |l2|).
+        for p in 0..self.active {
+            let p_base = p * self.llr_stride;
+            for i in 0..half {
+                let l1 = self.llrs[p_base + parent_off + i];
+                let l2 = self.llrs[p_base + parent_off + half + i];
+                self.llrs[p_base + child_off + i] = min_sum(l1, l2);
+            }
+        }
 
-        let left_origins =
-            Self::scl_step(dim - 1, min_data_weight, offset, &left_llrs, paths, list_size);
+        self.step(dim - 1, offset);
 
-        // 2. Right branch (upper half: bit `dim - 1` is 1): g(L_lower, L_upper, u_lower).
-        let right_llrs: Vec<Vec<f64>> = paths
-            .iter()
-            .zip(&left_origins)
-            .map(|(path, &orig_idx)| {
-                let (lower, upper) = llrs[orig_idx].split_at(half);
-                let u_lower = &path.partial_sums[base_len..base_len + half];
-                lower
-                    .iter()
-                    .zip(upper)
-                    .zip(u_lower)
-                    .map(|((&l1, &l2), &u)| if u { l2 - l1 } else { l2 + l1 })
-                    .collect()
-            })
-            .collect();
+        // 2. Right branch: g(l1, l2, u_lower) = l2 - l1 (if u_lower) else l2 + l1.
+        for p in 0..self.active {
+            let p_base = p * self.llr_stride;
+            let s_base = p * self.sum_stride + base_v;
+            for i in 0..half {
+                let l1 = self.llrs[p_base + parent_off + i];
+                let l2 = self.llrs[p_base + parent_off + half + i];
+                let u = self.sums[s_base + i];
+                self.llrs[p_base + child_off + i] = if u { l2 - l1 } else { l2 + l1 };
+            }
+        }
 
-        let right_origins = Self::scl_step(
-            dim - 1,
-            min_data_weight,
-            offset | (half as u32),
-            &right_llrs,
-            paths,
-            list_size,
-        );
+        self.step(dim - 1, offset | (half as u32));
 
-        // 3. Combine partial sums in-place: u_lower[i] ^= u_upper[i] (superset_xor butterfly).
-        for path in paths.iter_mut() {
-            let sub = &mut path.partial_sums[base_len..base_len + 2 * half];
+        // 3. Butterfly combine in-place: u_lower[i] ^= u_upper[i].
+        for p in 0..self.active {
+            let s_base = p * self.sum_stride + base_v;
+            let sub = &mut self.sums[s_base..s_base + 2 * half];
             let (u_lower, u_upper) = sub.split_at_mut(half);
             for (a, b) in u_lower.iter_mut().zip(u_upper) {
                 *a ^= *b;
             }
         }
-
-        right_origins.into_iter().map(|r_idx| left_origins[r_idx]).collect()
     }
 }
 
-#[derive(Clone)]
-struct SclPath {
-    metric: f64,
-    partial_sums: Vec<bool>,
-    coefficients: Vec<bool>,
-}
-
-#[inline]
-fn box_plus(l1: f64, l2: f64) -> f64 {
-    let prod = (0.5 * l1).tanh() * (0.5 * l2).tanh();
-    const MAX_SPIN: f64 = 1.0 - 1e-15;
-    2.0 * prod.clamp(-MAX_SPIN, MAX_SPIN).atanh()
-}
-
-#[inline]
-fn scl_penalty(l: f64, bit: bool) -> f64 {
-    // Exact log-domain path metric increment: ln(1 + exp(-s * l)) where s = +1 for bit=0, -1 for bit=1.
-    let signed_l = if bit { -l } else { l };
-    if signed_l > 30.0 {
-        0.0
-    } else if signed_l < -30.0 {
-        -signed_l
+#[inline(always)]
+fn min_sum(l1: f64, l2: f64) -> f64 {
+    let min_abs = l1.abs().min(l2.abs());
+    if (l1.to_bits() ^ l2.to_bits()) >> 63 != 0 {
+        -min_abs
     } else {
-        (-signed_l).exp().ln_1p()
+        min_abs
     }
 }
 
