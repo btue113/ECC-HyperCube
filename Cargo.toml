@@ -1,11 +1,14 @@
 [package]
 name = "ecc-hypercube"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 authors = ["Tue Bui <bomot113@gmail.com>"]
 description = "Fast encoding and decoding of Reed-Muller error correcting codes based on hypercubes"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/btue113/ECC-HyperCube"
+# Not published: the 5G / CRC / PAC comparison benchmark (a research baseline) and the
+# brainstorming notes and figures at the repository root (README.md is kept).
+exclude = ["benches/polar_5g.rs", "/*.md", "!/README.md", "/*.svg", ".DS_Store"]
 
 [[bin]]
 name = "cubecode"
@@ -13,6 +16,10 @@ path = "src/main.rs"
 
 [[bench]]
 name = "codec"
+harness = false
+
+[[bench]]
+name = "polar_5g"
 harness = false
 
 [profile.release]

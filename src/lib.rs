@@ -16,7 +16,7 @@ pub mod cube_code;
 pub mod hypercube;
 pub mod reed_muller;
 
-pub use cube_code::CubeCode;
+pub use cube_code::{CubeCode, SoftDecision};
 pub use hypercube::HyperCube;
 pub use reed_muller::ReedMuller;
 
@@ -31,6 +31,7 @@ pub enum Error {
     InvalidOrder { r: u32, m: u32 },
     Length { expected: usize, got: usize },
     NotBinary(char),
+    Unsupported(&'static str),
 }
 
 impl fmt::Display for Error {
@@ -44,6 +45,7 @@ impl fmt::Display for Error {
             Error::InvalidOrder { r, m } => write!(f, "invalid Reed-Muller code RM({r},{m}): need r < m"),
             Error::Length { expected, got } => write!(f, "expected {expected} bits, got {got}"),
             Error::NotBinary(c) => write!(f, "not a binary digit: {c:?}"),
+            Error::Unsupported(what) => write!(f, "unsupported: {what}"),
         }
     }
 }

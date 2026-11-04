@@ -1,0 +1,48 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "ecc-hypercube: Reed–Muller codes on the hypercube"
+abstract: >-
+  Dependency-free Rust encoding and decoding of Reed–Muller codes on the
+  hypercube: the 2013 hypercube majority-logic decoder (Reed's 1954 algorithm)
+  with bit-packed voting, recursive soft-decision list decoding, and
+  automorphism-ensemble decoding with maximum-likelihood certificates for
+  early stopping.
+authors:
+  - family-names: Bui
+    given-names: Tue
+    email: bomot113@gmail.com
+repository-code: "https://github.com/btue113/ECC-HyperCube"
+url: "https://tuebui.com/intuitive-information/hamming-hypercube/"
+license:
+  - MIT
+  - Apache-2.0
+version: 0.4.0
+date-released: 2026-11-17
+keywords:
+  - error-correcting codes
+  - Reed–Muller codes
+  - hypercube
+  - majority-logic decoding
+  - successive cancellation list decoding
+  - automorphism ensemble decoding
+  - maximum-likelihood certificate
+  - Rust
+references:
+  - type: software
+    title: "ECC-HyperCube (original 2013 C++ implementation)"
+    abstract: >-
+      The original hypercube-based majority-logic decoder, written while
+      visualizing the Hamming (7, 4) code on a 3D cube and generalizing the
+      picture to higher-dimensional hypercubes. Kept unchanged as the dated
+      record of the original work.
+    authors:
+      - family-names: Bui
+        given-names: Tue
+        email: bomot113@gmail.com
+    repository-code: "https://github.com/bomot113/ECC-HyperCube"
+    identifiers:
+      - type: swh
+        value: "swh:1:snp:c7c766d4944a49ebe2be9339c5047d1d4f8e0a87"
+        description: "Software Heritage snapshot of the original repository"
+    date-released: 2013-10-01

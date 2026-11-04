@@ -1,7 +1,7 @@
 //! RM(r, m): the punctured cube code extended with an overall parity bit.
 
 use crate::cube_code::CubeCode;
-use crate::{Bits, Error};
+use crate::{Bits, Error, SoftDecision};
 
 #[derive(Debug)]
 pub struct ReedMuller {
@@ -61,6 +61,43 @@ impl ReedMuller {
         }
         let (&zero_llr, rest) = received.split_last().unwrap();
         self.code.decode_soft_list_with_zero(rest, Some(zero_llr), list_size)
+    }
+
+    /// Automorphism-ensemble decoding: run SCL with `list_size` paths on `ensemble_size`
+    /// relabelled copies of the cube and keep the closest codeword. `ensemble_size = 1`
+    /// is plain `decode_soft_list`.
+    pub fn decode_soft_ensemble(
+        &self,
+        received: &[f64],
+        list_size: usize,
+        ensemble_size: usize,
+    ) -> Result<Bits, Error> {
+        Ok(self.decode_soft_ensemble_checked(received, list_size, ensemble_size)?.message)
+    }
+
+    /// Like `decode_soft_ensemble`, with the cost, runner-up and certificate of
+    /// `decode_soft_checked`. Stops early at the first copy whose answer is proven best.
+    pub fn decode_soft_ensemble_checked(
+        &self,
+        received: &[f64],
+        list_size: usize,
+        ensemble_size: usize,
+    ) -> Result<SoftDecision, Error> {
+        if received.len() != self.block_len() {
+            return Err(Error::Length { expected: self.block_len(), got: received.len() });
+        }
+        let (&zero_llr, rest) = received.split_last().unwrap();
+        self.code.decode_soft_ensemble_with_zero(rest, zero_llr, list_size, ensemble_size)
+    }
+
+    /// Like `decode_soft_list`, but also reports the decoded codeword's cost, the
+    /// runner-up's cost, and whether the answer is provably maximum likelihood.
+    pub fn decode_soft_checked(&self, received: &[f64], list_size: usize) -> Result<SoftDecision, Error> {
+        if received.len() != self.block_len() {
+            return Err(Error::Length { expected: self.block_len(), got: received.len() });
+        }
+        let (&zero_llr, rest) = received.split_last().unwrap();
+        self.code.decode_soft_checked_with_zero(rest, Some(zero_llr), list_size)
     }
 }
 

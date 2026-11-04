@@ -24,6 +24,8 @@ pub struct CubeCode {
     p_dims: u32,
     cw_len: usize,
     data_len: usize,
+    /// Lookup table indexed by vertex `0..=cw_len`: `true` for unfrozen vertices, `false` for frozen parity vertices.
+    is_unfrozen: Vec<bool>,
     needed_votes: usize,
     bit_to_cube: Vec<u32>,
     cube_to_bit: Vec<usize>,
@@ -61,7 +63,13 @@ impl CubeCode {
             cube_to_bit[cube as usize] = bit;
         }
 
-        let data_len = cubes_in_level[(cw_dims - p_dims) as usize];
+        let first_parity_level = (cw_dims - p_dims) as usize;
+        let data_len = cubes_in_level[first_parity_level];
+        let mut is_unfrozen = vec![false; cw_len + 1];
+        for &v in &bit_to_cube[..data_len] {
+            is_unfrozen[v as usize] = true;
+        }
+
         let votes = (1usize << (p_dims + 1)) - 1;
         let mut voter_complements = vec![Vec::new(); cw_dims as usize + 1];
         // A compressed assignment depends only on the number of fixed bits.
@@ -81,6 +89,7 @@ impl CubeCode {
             p_dims,
             cw_len,
             data_len,
+            is_unfrozen,
             needed_votes: 1 << p_dims,
             bit_to_cube,
             cube_to_bit,
@@ -143,7 +152,7 @@ impl CubeCode {
         let code = self.to_vertices(received);
         let mut mask = code.clone();
         superset_xor(&mut mask);
-        if self.bit_to_cube[self.data_len..].iter().all(|&v| !mask[v as usize]) {
+        if (1..=self.cw_len).all(|v| self.is_unfrozen[v] || !mask[v]) {
             return Ok(received[..self.data_len].to_vec());
         }
 
@@ -153,6 +162,7 @@ impl CubeCode {
 
         let mut coefficients = vec![false; self.cw_len + 1];
         let data_dims = (self.cw_dims - self.p_dims) as usize;
+
         for dim in (0..data_dims).rev() {
             mask.fill(false);
             let mut any = false;
@@ -180,18 +190,34 @@ impl CubeCode {
             }
         }
         superset_xor(&mut coefficients);
-        Ok(self.bit_to_cube[..self.data_len].iter()
-            .map(|&v| coefficients[v as usize]).collect())
+        Ok(self.bit_to_cube[..self.data_len]
+            .iter()
+            .map(|&v| coefficients[v as usize])
+            .collect())
     }
 
     fn level(&self, level: usize) -> std::ops::Range<usize> {
         self.cubes_in_level[level]..self.cubes_in_level[level + 1]
     }
 
-    /// Majority vote using shared assignments and directly indexed vertices.
+    /// Majority vote for the coefficient at the vertex of data bit `bit`.
+    ///
+    /// The vertex's unit cube is every superset of it: its 1-digits are
+    /// fixed and its 0-digits are free. The cubes that vote are the copies of
+    /// that cube with some fixed digits switched to 0 (the unit cube itself is
+    /// one of them). Each copy votes with the XOR of the received bits on its
+    /// corners, and the first side to reach a majority wins.
+    ///
+    /// `code` holds vertex `v` at bit `v & 63` of word `v >> 6`. Moving along
+    /// digit `d` is then a fixed jump of `2^d` bits, so a voting cube is a
+    /// fixed bit pattern: a mask over its free low digits (0..6) inside each
+    /// word, repeated across the words picked by its free high digits.
     fn vote(&self, code: &[u64], bit: usize) -> bool {
         let fixed = self.bit_to_cube[bit];
         let free = self.cw_len as u32 ^ fixed;
+        // In-word mask of a cube based at 0: one bit per combination of the
+        // free low digits. Each free digit doubles the pattern, e.g. free
+        // digits {0, 2} give lanes = 0b110011 (bits 0, 1, 4, 5).
         let mut lanes = 1u64;
         let mut low_free = free & 63;
         while low_free != 0 {
@@ -199,7 +225,9 @@ impl CubeCode {
             lanes |= lanes << shift;
             low_free ^= shift;
         }
+        // Free digits 6 and up select which words the cube spans.
         let word_free = free >> 6;
+        // positions[j] is the j-th lowest 1-digit of the vertex, as a bit.
         let mut positions = [0u32; MAX_DIMS as usize];
         let mut remaining = fixed;
         let mut weight = 0;
@@ -210,13 +238,22 @@ impl CubeCode {
             remaining ^= position;
         }
         let mut votes = [0usize; 2];
+        // Every vertex of the same weight votes with the same list of cubes,
+        // up to relabelling digits. So the list is stored once per weight:
+        // bit j of `complement` says "switch the vertex's j-th 1-digit to 0".
         for &complement in &self.voter_complements[weight] {
+            // The voting cube's lowest corner: the vertex with those 1-digits
+            // cleared. Its free digits are all 0, so adding any combination
+            // of them (`base | s`) reaches every corner of the cube.
             let mut base = fixed;
             let mut zeros = complement;
             while zeros != 0 {
                 base ^= positions[zeros.trailing_zeros() as usize];
                 zeros &= zeros - 1;
             }
+            // XOR together every word the cube touches. `subset` walks all
+            // combinations of the free high digits (Knuth's
+            // `(s - mask) & mask` step), starting and ending at 0.
             let mut parity_word = 0u64;
             let mut subset = 0;
             loop {
@@ -226,6 +263,7 @@ impl CubeCode {
                     break;
                 }
             }
+            // Keep only this cube's lanes and count them: odd votes 1.
             let parity = (parity_word & (lanes << (base & 63))).count_ones() & 1 != 0;
             votes[parity as usize] += 1;
             if votes[parity as usize] == self.needed_votes {
@@ -279,9 +317,10 @@ impl CubeCode {
 
         // Fast path: if the hard-decision word already satisfies all parity checks, return it.
         let hard: Bits = received.iter().map(|&y| y > 0.0).collect();
-        let mut mask = self.to_vertices(&hard);
+        let code = self.to_vertices(&hard);
+        let mut mask = code.clone();
         superset_xor(&mut mask);
-        if self.bit_to_cube[self.data_len..].iter().all(|&v| !mask[v as usize])
+        if (1..=self.cw_len).all(|v| self.is_unfrozen[v] || !mask[v])
             && zero_vertex_llr.map_or(true, |z| (z > 0.0) == mask[0])
         {
             return Ok(hard[..self.data_len].to_vec());
@@ -289,20 +328,293 @@ impl CubeCode {
 
         // Reuse the cached SclDecoder workspace across calls, growing it only when `list_size` increases.
         let mut guard = self.scl_workspace.lock().unwrap_or_else(|e| e.into_inner());
-        let decoder = guard.get_or_insert_with(|| SclDecoder::new(self.cw_dims, self.p_dims + 1, list_size));
+        let decoder = guard.get_or_insert_with(|| SclDecoder::new(self.cw_dims, list_size));
         decoder.prepare(list_size, &self.bit_to_cube, received, zero_vertex_llr);
-        let values = decoder.decode();
-        Ok(self.bit_to_cube[..self.data_len]
-            .iter()
-            .map(|&v| values[v as usize])
-            .collect())
+        decoder.step(decoder.dims, 0, &self.is_unfrozen);
+
+        let values = decoder.best_path();
+        Ok(self.bit_to_cube[..self.data_len].iter().map(|&v| values[v as usize]).collect())
     }
+
+    /// Automorphism-ensemble SCL: decode up to `ensemble_size` relabelled copies of the
+    /// cube and keep the codeword that disagrees least with the received word.
+    ///
+    /// RM codes are unchanged by any affine relabelling of the corners' digits,
+    /// `x -> A x ^ b`, but the decoder's fixed sweep order is not. Each relabelling
+    /// shows the decoder the same word in a different order, so its mistakes differ.
+    /// The first copy is the identity, so the result is never worse than plain SCL.
+    ///
+    /// Decoding stops at the first copy whose best word is proven maximum likelihood.
+    /// The best codeword is the same in every copy, so one copy's proof covers them all.
+    pub(crate) fn decode_soft_ensemble_with_zero(
+        &self,
+        received: &[f64],
+        zero_vertex_llr: f64,
+        list_size: usize,
+        ensemble_size: usize,
+    ) -> Result<SoftDecision, Error> {
+        if self.p_dims == 0 {
+            return Err(Error::Unsupported("ensemble decoding needs p_dims > 0"));
+        }
+        let list_size = list_size.max(1);
+        let min_distance = 1usize << (self.p_dims + 1);
+        let n = self.cw_len + 1;
+        let mut y = vec![0.0; n];
+        y[0] = zero_vertex_llr;
+        for (&r, &vertex) in received.iter().zip(&self.bit_to_cube) {
+            y[vertex as usize] = r;
+        }
+        let message = |word: &[bool]| -> Bits {
+            self.bit_to_cube[..self.data_len].iter().map(|&v| word[v as usize]).collect()
+        };
+
+        // Fast path: the hard-decision word is already a codeword, at cost 0.
+        let mut mask: Bits = y.iter().map(|&l| l > 0.0).collect();
+        let hard = mask.clone();
+        superset_xor(&mut mask);
+        if (0..n).all(|v| self.is_unfrozen[v] || !mask[v]) {
+            return Ok(SoftDecision {
+                message: message(&hard),
+                cost: 0.0,
+                runner_up_cost: f64::INFINITY,
+                pruned_bound: f64::INFINITY,
+                distance_certified: true,
+                certified: true,
+            });
+        }
+
+        let mut guard = self.scl_workspace.lock().unwrap_or_else(|e| e.into_inner());
+        let decoder = guard.get_or_insert_with(|| SclDecoder::new(self.cw_dims, list_size));
+        // A fixed seed keeps decoding deterministic.
+        let mut seed = 0x9E37_79B9_7F4A_7C15u64;
+        let mut perm = vec![0u32; n];
+        let mut y_perm = vec![0.0; n];
+        let mut best = vec![false; n];
+        let mut best_cost = f64::INFINITY;
+        let mut best_flips = usize::MAX;
+        let mut distance_certified = false;
+        let mut runner_up_cost = f64::INFINITY;
+        let mut agreements = 0usize;
+        // Each copy proves that no codeword outside its final list costs less than its
+        // `pruned_min`, so the best word is maximum likelihood once it costs no more than
+        // the largest of these bounds.
+        let mut pruned_bound = 0.0f64;
+        for copy in 0..ensemble_size.max(1) {
+            if copy == 0 {
+                for x in 0..n {
+                    perm[x] = x as u32;
+                }
+            } else {
+                let columns = random_invertible(self.cw_dims, &mut seed);
+                perm[0] = (splitmix64(&mut seed) as u32) & (self.cw_len as u32);
+                // perm[x] = A x ^ b, built from x with its lowest 1-digit cleared.
+                for x in 1..n {
+                    perm[x] = perm[x & (x - 1)] ^ columns[x.trailing_zeros() as usize];
+                }
+            }
+            for (yp, &p) in y_perm.iter_mut().zip(&perm) {
+                *yp = y[p as usize];
+            }
+            decoder.prepare_vertices(list_size, &y_perm);
+            decoder.step(decoder.dims, 0, &self.is_unfrozen);
+            decoder.sort_paths_by_metric();
+            pruned_bound = pruned_bound.max(decoder.pruned_min);
+            if let Some(&p) = decoder.order.get(1) {
+                runner_up_cost = runner_up_cost.min(decoder.metrics[p]);
+            }
+            let word = decoder.path_values(decoder.order[0]);
+            let mut cost = 0.0;
+            let mut flips = 0usize;
+            for (&c, &l) in word.iter().zip(&y_perm) {
+                if c != (l > 0.0) {
+                    cost += l.abs();
+                    flips += 1;
+                }
+            }
+            if cost < best_cost - 1e-9 {
+                runner_up_cost = runner_up_cost.min(best_cost);
+                best_cost = cost;
+                best_flips = flips;
+                for (&c, &p) in word.iter().zip(&perm) {
+                    best[p as usize] = c;
+                }
+                distance_certified = is_ml_certified(&best, &y, min_distance);
+                agreements = 1;
+            } else if cost <= best_cost + 1e-9
+                && word.iter().zip(&perm).all(|(&c, &p)| c == best[p as usize])
+            {
+                agreements += 1;
+            } else if cost > best_cost + 1e-9
+                || word.iter().zip(&perm).any(|(&c, &p)| c != best[p as usize])
+            {
+                runner_up_cost = runner_up_cost.min(cost);
+            }
+            // Stop when the best word is proven maximum likelihood. Two cheap heuristics
+            // (not proofs) also stop: the best word is within d/2 - 1 flips of the hard
+            // decision, where it is the unique nearest codeword in Hamming distance; or three
+            // copies with lists agree on it (greedy L = 1 copies agree on wrong words too often).
+            if distance_certified
+                || best_cost <= pruned_bound
+                || best_flips < self.needed_votes
+                || (list_size >= 4 && agreements >= 3)
+            {
+                break;
+            }
+        }
+        Ok(SoftDecision {
+            message: message(&best),
+            cost: best_cost,
+            runner_up_cost,
+            pruned_bound,
+            distance_certified,
+            certified: distance_certified || best_cost <= pruned_bound,
+        })
+    }
+
+    /// Soft SCL decoding that also reports how trustworthy the answer is.
+    ///
+    /// `zero_vertex_llr` is vertex 0's reading (`None` when punctured, read as an erasure).
+    /// The certificate checks the extended code, whose minimum distance is `2^(p_dims + 1)`.
+    pub(crate) fn decode_soft_checked_with_zero(
+        &self,
+        received: &[f64],
+        zero_vertex_llr: Option<f64>,
+        list_size: usize,
+    ) -> Result<SoftDecision, Error> {
+        if self.p_dims == 0 {
+            return Err(Error::Unsupported("checked decoding needs p_dims > 0"));
+        }
+        let min_distance = 1usize << (self.p_dims + 1);
+        let mut y = vec![0.0; self.cw_len + 1];
+        y[0] = zero_vertex_llr.unwrap_or(0.0);
+        for (&r, &vertex) in received.iter().zip(&self.bit_to_cube) {
+            y[vertex as usize] = r;
+        }
+        let message = |word: &[bool]| -> Bits {
+            self.bit_to_cube[..self.data_len].iter().map(|&v| word[v as usize]).collect()
+        };
+
+        // Fast path: the hard-decision word is already a codeword, at cost 0.
+        let hard: Bits = y.iter().map(|&l| l > 0.0).collect();
+        let mut mask = hard.clone();
+        superset_xor(&mut mask);
+        if (0..=self.cw_len).all(|v| self.is_unfrozen[v] || !mask[v]) {
+            return Ok(SoftDecision {
+                message: message(&hard),
+                cost: 0.0,
+                runner_up_cost: f64::INFINITY,
+                pruned_bound: f64::INFINITY,
+                distance_certified: true,
+                certified: true,
+            });
+        }
+
+        let mut guard = self.scl_workspace.lock().unwrap_or_else(|e| e.into_inner());
+        let decoder = guard.get_or_insert_with(|| SclDecoder::new(self.cw_dims, list_size.max(1)));
+        decoder.prepare(list_size.max(1), &self.bit_to_cube, received, zero_vertex_llr);
+        decoder.step(decoder.dims, 0, &self.is_unfrozen);
+        decoder.sort_paths_by_metric();
+        let word = decoder.path_values(decoder.order[0]);
+        // A finished path's min-sum metric is its codeword's disagreement cost.
+        let runner_up_cost = decoder.order.get(1).map_or(f64::INFINITY, |&p| decoder.metrics[p]);
+        let cost = disagreement_cost(word, &y);
+        let distance_certified = is_ml_certified(word, &y, min_distance);
+        Ok(SoftDecision {
+            message: message(word),
+            cost,
+            runner_up_cost,
+            pruned_bound: decoder.pruned_min,
+            distance_certified,
+            certified: distance_certified || cost <= decoder.pruned_min,
+        })
+    }
+}
+
+/// A random invertible `dims x dims` matrix over GF(2), as its columns.
+fn random_invertible(dims: u32, seed: &mut u64) -> Vec<u32> {
+    let mask = ((1u64 << dims) - 1) as u32;
+    loop {
+        let columns: Vec<u32> = (0..dims).map(|_| splitmix64(seed) as u32 & mask).collect();
+        // Gaussian elimination on a copy: invertible iff every column adds a new pivot.
+        let mut basis = [0u32; 32];
+        let independent = columns.iter().all(|&c| {
+            let mut c = c;
+            while c != 0 {
+                let top = 31 - c.leading_zeros() as usize;
+                if basis[top] == 0 {
+                    basis[top] = c;
+                    return true;
+                }
+                c ^= basis[top];
+            }
+            false
+        });
+        if independent {
+            return columns;
+        }
+    }
+}
+
+fn splitmix64(state: &mut u64) -> u64 {
+    *state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
+    let mut z = *state;
+    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    z ^ (z >> 31)
+
+}
+
+/// A soft decision with evidence about whether to trust it.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SoftDecision {
+    pub message: Bits,
+    /// Sum of `|llr|` over the bits where the decoded codeword disagrees with the received signs.
+    pub cost: f64,
+    /// Cost of the next-best codeword left in the list (`INFINITY` when there is none).
+    pub runner_up_cost: f64,
+    /// No codeword outside the final list costs less than this (`INFINITY` if nothing was pruned).
+    pub pruned_bound: f64,
+    /// `true` when the minimum-distance test alone proves maximum likelihood (`is_ml_certified`).
+    pub distance_certified: bool,
+    /// `true` when the codeword is provably maximum likelihood: by the distance test, or
+    /// because it costs no more than `pruned_bound`.
+    pub certified: bool,
+}
+
+fn disagreement_cost(word: &[bool], llrs: &[f64]) -> f64 {
+    word.iter().zip(llrs).filter(|&(&c, &l)| c != (l > 0.0)).map(|(_, &l)| l.abs()).sum()
+}
+
+/// Taipale–Pursley sufficient condition for maximum likelihood (1991).
+///
+/// Any other codeword differs from `word` in at least `min_distance` places. At most
+/// `|D|` of those can be places where `word` disagrees with the received signs (set `D`),
+/// so at least `min_distance - |D|` are places where `word` agrees, and the other codeword
+/// pays for each of them. If even the cheapest such places cost more than `word` does,
+/// no codeword is cheaper.
+fn is_ml_certified(word: &[bool], llrs: &[f64], min_distance: usize) -> bool {
+    let mut cost = 0.0;
+    let mut disagreements = 0;
+    let mut agreeing: Vec<f64> = Vec::with_capacity(llrs.len());
+    for (&c, &l) in word.iter().zip(llrs) {
+        if c != (l > 0.0) {
+            cost += l.abs();
+            disagreements += 1;
+        } else {
+            agreeing.push(l.abs());
+        }
+    }
+    if disagreements >= min_distance {
+        return false;
+    }
+    let needed = min_distance - disagreements;
+    agreeing.select_nth_unstable_by(needed - 1, f64::total_cmp);
+    cost < agreeing[..needed].iter().sum::<f64>()
 }
 
 #[derive(Debug)]
 struct SclDecoder {
     dims: u32,
-    min_data_weight: u32,
     list_size: usize,
     active: usize,
     metrics: Vec<f64>,
@@ -315,16 +627,19 @@ struct SclDecoder {
     candidates: Vec<(f64, usize, bool)>,
     parent_used: Vec<bool>,
     deferred: Vec<usize>,
+    order: Vec<usize>,
+    /// Lowest metric among paths dropped from the list. Metrics only grow down the tree,
+    /// so no codeword outside the final list costs less than this.
+    pruned_min: f64,
 }
 
 impl SclDecoder {
-    fn new(dims: u32, min_data_weight: u32, list_size: usize) -> Self {
+    fn new(dims: u32, list_size: usize) -> Self {
         let n = 1usize << dims;
         let llr_stride = 2 * n;
         let sum_stride = n;
         Self {
             dims,
-            min_data_weight,
             list_size,
             active: 1,
             metrics: vec![0.0f64; list_size],
@@ -335,6 +650,8 @@ impl SclDecoder {
             candidates: Vec::with_capacity(list_size * 2),
             parent_used: vec![false; list_size],
             deferred: Vec::with_capacity(list_size),
+            order: Vec::with_capacity(list_size),
+            pruned_min: f64::INFINITY,
         }
     }
 
@@ -345,15 +662,7 @@ impl SclDecoder {
         received: &[f64],
         zero_vertex_llr: Option<f64>,
     ) {
-        self.list_size = list_size;
-        if self.metrics.len() < list_size {
-            self.metrics.resize(list_size, 0.0);
-            self.llrs.resize(list_size * self.llr_stride, 0.0);
-            self.sums.resize(list_size * self.sum_stride, false);
-            self.parent_used.resize(list_size, false);
-        }
-        self.active = 1;
-        self.metrics[0] = 0.0;
+        self.reset(list_size);
 
         // Convert convention (`> 0` favors 1) to standard polar LLR (`> 0` favors 0): L = -y.
         // Vertex 0 is punctured in standalone `CubeCode` (erasure: LLR = 0.0), or supplied by `ReedMuller`.
@@ -364,25 +673,57 @@ impl SclDecoder {
         }
     }
 
+    /// Like `prepare`, with one received value per vertex (`llrs[v]` for vertex `v`).
+    fn prepare_vertices(&mut self, list_size: usize, llrs: &[f64]) {
+        self.reset(list_size);
+        let root_off = Self::llr_offset(self.dims);
+        for (dst, &y) in self.llrs[root_off..root_off + llrs.len()].iter_mut().zip(llrs) {
+            *dst = -y;
+        }
+    }
+
+    fn reset(&mut self, list_size: usize) {
+        self.list_size = list_size;
+        if self.metrics.len() < list_size {
+            self.metrics.resize(list_size, 0.0);
+            self.llrs.resize(list_size * self.llr_stride, 0.0);
+            self.sums.resize(list_size * self.sum_stride, false);
+            self.parent_used.resize(list_size, false);
+        }
+        self.active = 1;
+        self.pruned_min = f64::INFINITY;
+        self.metrics[0] = 0.0;
+    }
+
     #[inline]
     fn llr_offset(dim: u32) -> usize {
         (1usize << dim) - 1
     }
 
-    fn decode(&mut self) -> &[bool] {
-        self.step(self.dims, 0);
+    fn best_path(&self) -> &[bool] {
         let best_idx = (0..self.active)
             .min_by(|&a, &b| self.metrics[a].total_cmp(&self.metrics[b]))
             .unwrap();
-        let start = best_idx * self.sum_stride;
+        self.path_values(best_idx)
+    }
+
+    #[inline]
+    fn path_values(&self, path: usize) -> &[bool] {
+        let start = path * self.sum_stride;
         &self.sums[start..start + self.sum_stride]
     }
 
-    fn step(&mut self, dim: u32, offset: u32) {
+    fn sort_paths_by_metric(&mut self) {
+        self.order.clear();
+        self.order.extend(0..self.active);
+        let metrics = &self.metrics;
+        self.order.sort_unstable_by(|&a, &b| metrics[a].total_cmp(&metrics[b]));
+    }
+
+    fn step(&mut self, dim: u32, offset: u32, is_unfrozen: &[bool]) {
         if dim == 0 {
             let v = offset as usize;
-            let is_data = offset.count_ones() >= self.min_data_weight;
-            if !is_data {
+            if !is_unfrozen[v] {
                 for p in 0..self.active {
                     let l = self.llrs[p * self.llr_stride];
                     if l < 0.0 {
@@ -393,7 +734,15 @@ impl SclDecoder {
                 return;
             }
 
-            // Data vertex: fork active paths into 0 (`false`) and 1 (`true`).
+            if self.list_size == 1 {
+                // Greedy: take the free choice and record the dropped one's cost.
+                let l = self.llrs[0];
+                self.pruned_min = self.pruned_min.min(self.metrics[0] + l.abs());
+                self.sums[v] = l < 0.0;
+                return;
+            }
+
+            // Unfrozen vertex: fork active paths into 0 (`false`) and 1 (`true`).
             self.candidates.clear();
             for p in 0..self.active {
                 let l = self.llrs[p * self.llr_stride];
@@ -405,6 +754,9 @@ impl SclDecoder {
             if self.candidates.len() > self.list_size {
                 self.candidates
                     .select_nth_unstable_by(self.list_size - 1, |a, b| a.0.total_cmp(&b.0));
+                let dropped = &self.candidates[self.list_size..];
+                let lowest = dropped.iter().map(|c| c.0).fold(f64::INFINITY, f64::min);
+                self.pruned_min = self.pruned_min.min(lowest);
                 self.candidates.truncate(self.list_size);
             }
 
@@ -465,7 +817,7 @@ impl SclDecoder {
             }
         }
 
-        self.step(dim - 1, offset);
+        self.step(dim - 1, offset, is_unfrozen);
 
         // 2. Right branch: g(l1, l2, u_lower) = l2 - l1 (if u_lower) else l2 + l1.
         for p in 0..self.active {
@@ -479,7 +831,7 @@ impl SclDecoder {
             }
         }
 
-        self.step(dim - 1, offset | (half as u32));
+        self.step(dim - 1, offset | (half as u32), is_unfrozen);
 
         // 3. Butterfly combine in-place: u_lower[i] ^= u_upper[i].
         for p in 0..self.active {
