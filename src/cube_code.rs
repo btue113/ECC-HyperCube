@@ -12,6 +12,7 @@
 //! out of the received word before moving to the next level.
 
 use crate::hypercube::HyperCube;
+use crate::list_decoder::{classify_subtrees, new_list_decoder, ListDecode, Subtree, MAX_LIST_SIZE};
 use crate::{Bits, Error};
 use std::sync::{Mutex, OnceLock};
 
@@ -26,6 +27,8 @@ pub struct CubeCode {
     data_len: usize,
     /// Lookup table indexed by vertex `0..=cw_len`: `true` for unfrozen vertices, `false` for frozen parity vertices.
     is_unfrozen: Vec<bool>,
+    /// Kind of every subtree of the soft decoder's tree (see `classify_subtrees`).
+    subtrees: Vec<Subtree>,
     needed_votes: usize,
     bit_to_cube: Vec<u32>,
     cube_to_bit: Vec<usize>,
@@ -34,8 +37,8 @@ pub struct CubeCode {
     voter_complements: Vec<Vec<u32>>,
     /// Materialized only when a caller requests the public cube view.
     voters: Vec<OnceLock<Vec<HyperCube>>>,
-    /// Reusable workspace for soft SCL decoding across calls.
-    scl_workspace: Mutex<Option<SclDecoder>>,
+    /// List decoders reused across calls, one per width (`list_decoder` picks the slot).
+    list_decoders: Mutex<Vec<Option<Box<dyn ListDecode>>>>,
 }
 
 impl CubeCode {
@@ -70,6 +73,8 @@ impl CubeCode {
             is_unfrozen[v as usize] = true;
         }
 
+        let subtrees = classify_subtrees(&is_unfrozen);
+
         let votes = (1usize << (p_dims + 1)) - 1;
         let mut voter_complements = vec![Vec::new(); cw_dims as usize + 1];
         // A compressed assignment depends only on the number of fixed bits.
@@ -90,13 +95,14 @@ impl CubeCode {
             cw_len,
             data_len,
             is_unfrozen,
+            subtrees,
             needed_votes: 1 << p_dims,
             bit_to_cube,
             cube_to_bit,
             cubes_in_level,
             voter_complements,
             voters,
-            scl_workspace: Mutex::new(None),
+            list_decoders: Mutex::new(Vec::new()),
         })
     }
 
@@ -298,7 +304,8 @@ impl CubeCode {
         self.decode_soft_list(received, 8)
     }
 
-    /// Soft-decision Successive Cancellation List (SCL) decoder with `list_size` candidate paths.
+    /// Soft-decision Successive Cancellation List (SCL) decoder with `list_size` candidate paths
+    /// (at most 256).
     pub fn decode_soft_list(&self, received: &[f64], list_size: usize) -> Result<Bits, Error> {
         check_len(self.cw_len, received.len())?;
         self.decode_soft_list_with_zero(received, None, list_size)
@@ -313,7 +320,7 @@ impl CubeCode {
         if self.p_dims == 0 {
             return Ok(received.iter().map(|&y| y > 0.0).collect());
         }
-        let list_size = list_size.max(1);
+        let list_size = list_size.clamp(1, MAX_LIST_SIZE);
 
         // Fast path: if the hard-decision word already satisfies all parity checks, return it.
         let hard: Bits = received.iter().map(|&y| y > 0.0).collect();
@@ -326,14 +333,13 @@ impl CubeCode {
             return Ok(hard[..self.data_len].to_vec());
         }
 
-        // Reuse the cached SclDecoder workspace across calls, growing it only when `list_size` increases.
-        let mut guard = self.scl_workspace.lock().unwrap_or_else(|e| e.into_inner());
-        let decoder = guard.get_or_insert_with(|| SclDecoder::new(self.cw_dims, list_size));
-        decoder.prepare(list_size, &self.bit_to_cube, received, zero_vertex_llr);
-        decoder.step(decoder.dims, 0, &self.is_unfrozen);
-
-        let values = decoder.best_path();
-        Ok(self.bit_to_cube[..self.data_len].iter().map(|&v| values[v as usize]).collect())
+        let y = self.vertex_readings(received, zero_vertex_llr.unwrap_or(0.0));
+        let mut guard = self.list_decoders.lock().unwrap_or_else(|e| e.into_inner());
+        let decoder = list_decoder(&mut guard, self.cw_dims, list_size);
+        decoder.decode(&y, list_size, &self.subtrees);
+        let mut word = Vec::new();
+        decoder.word(0, &mut word);
+        Ok(self.bit_to_cube[..self.data_len].iter().map(|&v| word[v as usize]).collect())
     }
 
     /// Automorphism-ensemble SCL: decode up to `ensemble_size` relabelled copies of the
@@ -356,14 +362,10 @@ impl CubeCode {
         if self.p_dims == 0 {
             return Err(Error::Unsupported("ensemble decoding needs p_dims > 0"));
         }
-        let list_size = list_size.max(1);
+        let list_size = list_size.clamp(1, MAX_LIST_SIZE);
         let min_distance = 1usize << (self.p_dims + 1);
         let n = self.cw_len + 1;
-        let mut y = vec![0.0; n];
-        y[0] = zero_vertex_llr;
-        for (&r, &vertex) in received.iter().zip(&self.bit_to_cube) {
-            y[vertex as usize] = r;
-        }
+        let y = self.vertex_readings(received, zero_vertex_llr);
         let message = |word: &[bool]| -> Bits {
             self.bit_to_cube[..self.data_len].iter().map(|&v| word[v as usize]).collect()
         };
@@ -383,8 +385,9 @@ impl CubeCode {
             });
         }
 
-        let mut guard = self.scl_workspace.lock().unwrap_or_else(|e| e.into_inner());
-        let decoder = guard.get_or_insert_with(|| SclDecoder::new(self.cw_dims, list_size));
+        let mut guard = self.list_decoders.lock().unwrap_or_else(|e| e.into_inner());
+        let decoder = list_decoder(&mut guard, self.cw_dims, list_size);
+        let mut word = Vec::with_capacity(n);
         // A fixed seed keeps decoding deterministic.
         let mut seed = 0x9E37_79B9_7F4A_7C15u64;
         let mut perm = vec![0u32; n];
@@ -415,14 +418,12 @@ impl CubeCode {
             for (yp, &p) in y_perm.iter_mut().zip(&perm) {
                 *yp = y[p as usize];
             }
-            decoder.prepare_vertices(list_size, &y_perm);
-            decoder.step(decoder.dims, 0, &self.is_unfrozen);
-            decoder.sort_paths_by_metric();
-            pruned_bound = pruned_bound.max(decoder.pruned_min);
-            if let Some(&p) = decoder.order.get(1) {
-                runner_up_cost = runner_up_cost.min(decoder.metrics[p]);
+            decoder.decode(&y_perm, list_size, &self.subtrees);
+            pruned_bound = pruned_bound.max(decoder.pruned_min());
+            if decoder.paths() > 1 {
+                runner_up_cost = runner_up_cost.min(decoder.metric(1));
             }
-            let word = decoder.path_values(decoder.order[0]);
+            decoder.word(0, &mut word);
             let mut cost = 0.0;
             let mut flips = 0usize;
             for (&c, &l) in word.iter().zip(&y_perm) {
@@ -484,12 +485,9 @@ impl CubeCode {
         if self.p_dims == 0 {
             return Err(Error::Unsupported("checked decoding needs p_dims > 0"));
         }
+        let list_size = list_size.clamp(1, MAX_LIST_SIZE);
         let min_distance = 1usize << (self.p_dims + 1);
-        let mut y = vec![0.0; self.cw_len + 1];
-        y[0] = zero_vertex_llr.unwrap_or(0.0);
-        for (&r, &vertex) in received.iter().zip(&self.bit_to_cube) {
-            y[vertex as usize] = r;
-        }
+        let y = self.vertex_readings(received, zero_vertex_llr.unwrap_or(0.0));
         let message = |word: &[bool]| -> Bits {
             self.bit_to_cube[..self.data_len].iter().map(|&v| word[v as usize]).collect()
         };
@@ -509,25 +507,49 @@ impl CubeCode {
             });
         }
 
-        let mut guard = self.scl_workspace.lock().unwrap_or_else(|e| e.into_inner());
-        let decoder = guard.get_or_insert_with(|| SclDecoder::new(self.cw_dims, list_size.max(1)));
-        decoder.prepare(list_size.max(1), &self.bit_to_cube, received, zero_vertex_llr);
-        decoder.step(decoder.dims, 0, &self.is_unfrozen);
-        decoder.sort_paths_by_metric();
-        let word = decoder.path_values(decoder.order[0]);
+        let mut guard = self.list_decoders.lock().unwrap_or_else(|e| e.into_inner());
+        let decoder = list_decoder(&mut guard, self.cw_dims, list_size);
+        decoder.decode(&y, list_size, &self.subtrees);
+        let mut word = Vec::new();
+        decoder.word(0, &mut word);
         // A finished path's min-sum metric is its codeword's disagreement cost.
-        let runner_up_cost = decoder.order.get(1).map_or(f64::INFINITY, |&p| decoder.metrics[p]);
-        let cost = disagreement_cost(word, &y);
-        let distance_certified = is_ml_certified(word, &y, min_distance);
+        let runner_up_cost = if decoder.paths() > 1 { decoder.metric(1) } else { f64::INFINITY };
+        let pruned_bound = decoder.pruned_min();
+        let cost = disagreement_cost(&word, &y);
+        let distance_certified = is_ml_certified(&word, &y, min_distance);
         Ok(SoftDecision {
-            message: message(word),
+            message: message(&word),
             cost,
             runner_up_cost,
-            pruned_bound: decoder.pruned_min,
+            pruned_bound,
             distance_certified,
-            certified: distance_certified || cost <= decoder.pruned_min,
+            certified: distance_certified || cost <= pruned_bound,
         })
     }
+
+    /// One reading per vertex, `y[v]` for vertex `v`: the received bits, plus vertex 0's
+    /// reading (0.0, an erasure, when it was not sent).
+    fn vertex_readings(&self, received: &[f64], zero_vertex_llr: f64) -> Vec<f64> {
+        let mut y = vec![0.0; self.cw_len + 1];
+        y[0] = zero_vertex_llr;
+        for (&r, &vertex) in received.iter().zip(&self.bit_to_cube) {
+            y[vertex as usize] = r;
+        }
+        y
+    }
+}
+
+/// The cached list decoder wide enough for `list_size` paths, created on first use.
+fn list_decoder(
+    cache: &mut Vec<Option<Box<dyn ListDecode>>>,
+    dims: u32,
+    list_size: usize,
+) -> &mut dyn ListDecode {
+    let slot = list_size.next_power_of_two().trailing_zeros() as usize;
+    if cache.len() <= slot {
+        cache.resize_with(slot + 1, || None);
+    }
+    cache[slot].get_or_insert_with(|| new_list_decoder(dims, list_size)).as_mut()
 }
 
 /// A random invertible `dims x dims` matrix over GF(2), as its columns.
@@ -610,249 +632,6 @@ fn is_ml_certified(word: &[bool], llrs: &[f64], min_distance: usize) -> bool {
     let needed = min_distance - disagreements;
     agreeing.select_nth_unstable_by(needed - 1, f64::total_cmp);
     cost < agreeing[..needed].iter().sum::<f64>()
-}
-
-#[derive(Debug)]
-struct SclDecoder {
-    dims: u32,
-    list_size: usize,
-    active: usize,
-    metrics: Vec<f64>,
-    /// Flat LLR workspace: `list_size` paths, each holding `2 * n` f64s (level `d` starts at `(1 << d) - 1`).
-    llrs: Vec<f64>,
-    /// Flat partial-sums workspace: `list_size` paths, each holding `n` bools.
-    sums: Vec<bool>,
-    llr_stride: usize,
-    sum_stride: usize,
-    candidates: Vec<(f64, usize, bool)>,
-    parent_used: Vec<bool>,
-    deferred: Vec<usize>,
-    order: Vec<usize>,
-    /// Lowest metric among paths dropped from the list. Metrics only grow down the tree,
-    /// so no codeword outside the final list costs less than this.
-    pruned_min: f64,
-}
-
-impl SclDecoder {
-    fn new(dims: u32, list_size: usize) -> Self {
-        let n = 1usize << dims;
-        let llr_stride = 2 * n;
-        let sum_stride = n;
-        Self {
-            dims,
-            list_size,
-            active: 1,
-            metrics: vec![0.0f64; list_size],
-            llrs: vec![0.0f64; list_size * llr_stride],
-            sums: vec![false; list_size * sum_stride],
-            llr_stride,
-            sum_stride,
-            candidates: Vec::with_capacity(list_size * 2),
-            parent_used: vec![false; list_size],
-            deferred: Vec::with_capacity(list_size),
-            order: Vec::with_capacity(list_size),
-            pruned_min: f64::INFINITY,
-        }
-    }
-
-    fn prepare(
-        &mut self,
-        list_size: usize,
-        bit_to_cube: &[u32],
-        received: &[f64],
-        zero_vertex_llr: Option<f64>,
-    ) {
-        self.reset(list_size);
-
-        // Convert convention (`> 0` favors 1) to standard polar LLR (`> 0` favors 0): L = -y.
-        // Vertex 0 is punctured in standalone `CubeCode` (erasure: LLR = 0.0), or supplied by `ReedMuller`.
-        let root_off = Self::llr_offset(self.dims);
-        self.llrs[root_off] = zero_vertex_llr.map_or(0.0, |z| -z);
-        for (&y, &vertex) in received.iter().zip(bit_to_cube) {
-            self.llrs[root_off + vertex as usize] = -y;
-        }
-    }
-
-    /// Like `prepare`, with one received value per vertex (`llrs[v]` for vertex `v`).
-    fn prepare_vertices(&mut self, list_size: usize, llrs: &[f64]) {
-        self.reset(list_size);
-        let root_off = Self::llr_offset(self.dims);
-        for (dst, &y) in self.llrs[root_off..root_off + llrs.len()].iter_mut().zip(llrs) {
-            *dst = -y;
-        }
-    }
-
-    fn reset(&mut self, list_size: usize) {
-        self.list_size = list_size;
-        if self.metrics.len() < list_size {
-            self.metrics.resize(list_size, 0.0);
-            self.llrs.resize(list_size * self.llr_stride, 0.0);
-            self.sums.resize(list_size * self.sum_stride, false);
-            self.parent_used.resize(list_size, false);
-        }
-        self.active = 1;
-        self.pruned_min = f64::INFINITY;
-        self.metrics[0] = 0.0;
-    }
-
-    #[inline]
-    fn llr_offset(dim: u32) -> usize {
-        (1usize << dim) - 1
-    }
-
-    fn best_path(&self) -> &[bool] {
-        let best_idx = (0..self.active)
-            .min_by(|&a, &b| self.metrics[a].total_cmp(&self.metrics[b]))
-            .unwrap();
-        self.path_values(best_idx)
-    }
-
-    #[inline]
-    fn path_values(&self, path: usize) -> &[bool] {
-        let start = path * self.sum_stride;
-        &self.sums[start..start + self.sum_stride]
-    }
-
-    fn sort_paths_by_metric(&mut self) {
-        self.order.clear();
-        self.order.extend(0..self.active);
-        let metrics = &self.metrics;
-        self.order.sort_unstable_by(|&a, &b| metrics[a].total_cmp(&metrics[b]));
-    }
-
-    fn step(&mut self, dim: u32, offset: u32, is_unfrozen: &[bool]) {
-        if dim == 0 {
-            let v = offset as usize;
-            if !is_unfrozen[v] {
-                for p in 0..self.active {
-                    let l = self.llrs[p * self.llr_stride];
-                    if l < 0.0 {
-                        self.metrics[p] -= l;
-                    }
-                    self.sums[p * self.sum_stride + v] = false;
-                }
-                return;
-            }
-
-            if self.list_size == 1 {
-                // Greedy: take the free choice and record the dropped one's cost.
-                let l = self.llrs[0];
-                self.pruned_min = self.pruned_min.min(self.metrics[0] + l.abs());
-                self.sums[v] = l < 0.0;
-                return;
-            }
-
-            // Unfrozen vertex: fork active paths into 0 (`false`) and 1 (`true`).
-            self.candidates.clear();
-            for p in 0..self.active {
-                let l = self.llrs[p * self.llr_stride];
-                let m = self.metrics[p];
-                let (m0, m1) = if l >= 0.0 { (m, m + l) } else { (m - l, m) };
-                self.candidates.push((m0, p, false));
-                self.candidates.push((m1, p, true));
-            }
-            if self.candidates.len() > self.list_size {
-                self.candidates
-                    .select_nth_unstable_by(self.list_size - 1, |a, b| a.0.total_cmp(&b.0));
-                let dropped = &self.candidates[self.list_size..];
-                let lowest = dropped.iter().map(|c| c.0).fold(f64::INFINITY, f64::min);
-                self.pruned_min = self.pruned_min.min(lowest);
-                self.candidates.truncate(self.list_size);
-            }
-
-            // Keep the first child of each surviving parent in-place in slot `parent`,
-            // and place second children into unused slots so we only copy on actual forks.
-            let new_active = self.candidates.len();
-            self.parent_used.fill(false);
-            self.deferred.clear();
-
-            for c_idx in 0..new_active {
-                let (metric, parent, bit) = self.candidates[c_idx];
-                if !self.parent_used[parent] {
-                    self.parent_used[parent] = true;
-                    self.metrics[parent] = metric;
-                    self.sums[parent * self.sum_stride + v] = bit;
-                } else {
-                    self.deferred.push(c_idx);
-                }
-            }
-
-            let mut free_slot = 0;
-            for d in 0..self.deferred.len() {
-                let (metric, parent, bit) = self.candidates[self.deferred[d]];
-                while self.parent_used[free_slot] {
-                    free_slot += 1;
-                }
-                self.parent_used[free_slot] = true;
-                self.metrics[free_slot] = metric;
-                // Copy the parent's full LLR tree (upper levels are still needed as recursion unwinds)
-                // and the partial sums computed so far (`0..v`).
-                let llr_src = parent * self.llr_stride;
-                let llr_dst = free_slot * self.llr_stride;
-                self.llrs.copy_within(llr_src..llr_src + self.llr_stride, llr_dst);
-
-                let sum_src = parent * self.sum_stride;
-                let sum_dst = free_slot * self.sum_stride;
-                if v > 0 {
-                    self.sums.copy_within(sum_src..sum_src + v, sum_dst);
-                }
-                self.sums[sum_dst + v] = bit;
-            }
-            self.active = new_active;
-            return;
-        }
-
-        let half = 1usize << (dim - 1);
-        let parent_off = Self::llr_offset(dim);
-        let child_off = Self::llr_offset(dim - 1);
-        let base_v = offset as usize;
-
-        // 1. Left branch: min-sum Box-Plus f(l1, l2) = sign(l1)*sign(l2)*min(|l1|, |l2|).
-        for p in 0..self.active {
-            let p_base = p * self.llr_stride;
-            for i in 0..half {
-                let l1 = self.llrs[p_base + parent_off + i];
-                let l2 = self.llrs[p_base + parent_off + half + i];
-                self.llrs[p_base + child_off + i] = min_sum(l1, l2);
-            }
-        }
-
-        self.step(dim - 1, offset, is_unfrozen);
-
-        // 2. Right branch: g(l1, l2, u_lower) = l2 - l1 (if u_lower) else l2 + l1.
-        for p in 0..self.active {
-            let p_base = p * self.llr_stride;
-            let s_base = p * self.sum_stride + base_v;
-            for i in 0..half {
-                let l1 = self.llrs[p_base + parent_off + i];
-                let l2 = self.llrs[p_base + parent_off + half + i];
-                let u = self.sums[s_base + i];
-                self.llrs[p_base + child_off + i] = if u { l2 - l1 } else { l2 + l1 };
-            }
-        }
-
-        self.step(dim - 1, offset | (half as u32), is_unfrozen);
-
-        // 3. Butterfly combine in-place: u_lower[i] ^= u_upper[i].
-        for p in 0..self.active {
-            let s_base = p * self.sum_stride + base_v;
-            let sub = &mut self.sums[s_base..s_base + 2 * half];
-            let (u_lower, u_upper) = sub.split_at_mut(half);
-            for (a, b) in u_lower.iter_mut().zip(u_upper) {
-                *a ^= *b;
-            }
-        }
-    }
-}
-
-#[inline(always)]
-fn min_sum(l1: f64, l2: f64) -> f64 {
-    let min_abs = l1.abs().min(l2.abs());
-    if (l1.to_bits() ^ l2.to_bits()) >> 63 != 0 {
-        -min_abs
-    } else {
-        min_abs
-    }
 }
 
 fn pack_vertices(values: &[bool]) -> Vec<u64> {

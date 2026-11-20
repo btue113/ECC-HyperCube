@@ -12,8 +12,11 @@
 //! assert_eq!(format_bits(&rm.decode(&received).unwrap()), "10110");
 //! ```
 
+#![forbid(unsafe_code)]
+
 pub mod cube_code;
 pub mod hypercube;
+mod list_decoder;
 pub mod reed_muller;
 
 pub use cube_code::{CubeCode, SoftDecision};
