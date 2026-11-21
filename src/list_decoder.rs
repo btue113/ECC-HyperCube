@@ -10,8 +10,8 @@
 use std::fmt::Debug;
 
 /// The subtrees the decoder finishes in one step instead of recursing down to single
-/// vertices. Dumer's recursive decoding of Reed–Muller codes ends at the same two kinds
-/// of code, RM(0, d) and RM(d, d) (Dumer 2004; Dumer and Shabunov 2006).
+/// vertices. Dumer's recursive decoding of Reed–Muller codes ends at RM(0, d), RM(1, d),
+/// and RM(d, d) (Green 1966; Dumer 2004; Dumer and Shabunov 2006).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Subtree {
     /// Every vertex is frozen: the only codeword is all zeros.
@@ -19,6 +19,9 @@ pub(crate) enum Subtree {
     /// Only the subtree's last vertex is unfrozen: the codewords are all zeros and all
     /// ones, a repetition code RM(0, d). A single unfrozen vertex is the case d = 0.
     Repetition,
+    /// First-order Reed–Muller code RM(1, d) (`d >= 2`): unfrozen vertices are exactly
+    /// those of local weight `>= d - 1`, decoded in one step via Fast Walsh–Hadamard Transform.
+    FirstOrder,
     /// Every vertex is unfrozen: every word is a codeword, RM(d, d).
     Free,
     /// Anything else: recurse into the two halves.
@@ -29,17 +32,20 @@ pub(crate) enum Subtree {
 /// node `k` has halves `2k` and `2k + 1`, and vertex `v` is leaf `n + v`.
 pub(crate) fn classify_subtrees(is_unfrozen: &[bool]) -> Vec<Subtree> {
     let n = is_unfrozen.len();
-    // Per node: number of unfrozen vertices, number of vertices, and whether the last is unfrozen.
+    // Per node: number of unfrozen vertices, number of vertices, start vertex, and last unfrozen.
     let mut unfrozen = vec![0usize; 2 * n];
     let mut size = vec![1usize; 2 * n];
+    let mut start = vec![0usize; 2 * n];
     let mut last_unfrozen = vec![false; 2 * n];
     for (v, &u) in is_unfrozen.iter().enumerate() {
         unfrozen[n + v] = usize::from(u);
+        start[n + v] = v;
         last_unfrozen[n + v] = u;
     }
     for k in (1..n).rev() {
         unfrozen[k] = unfrozen[2 * k] + unfrozen[2 * k + 1];
         size[k] = 2 * size[2 * k];
+        start[k] = start[2 * k];
         last_unfrozen[k] = last_unfrozen[2 * k + 1];
     }
     (0..2 * n)
@@ -47,6 +53,14 @@ pub(crate) fn classify_subtrees(is_unfrozen: &[bool]) -> Vec<Subtree> {
             0 => Subtree::Frozen,
             1 if last_unfrozen[k] => Subtree::Repetition,
             u if u == size[k] => Subtree::Free,
+            u if size[k] >= 4
+                && u == size[k].trailing_zeros() as usize + 1
+                && (0..size[k]).all(|x| {
+                    is_unfrozen[start[k] + x] == (x.count_ones() >= size[k].trailing_zeros() - 1)
+                }) =>
+            {
+                Subtree::FirstOrder
+            }
             _ => Subtree::Mixed,
         })
         .collect()
@@ -104,8 +118,12 @@ struct ListDecoder<const L: usize> {
     /// Paths sorted by metric, cheapest first (filled when decoding ends).
     order: Vec<usize>,
     pruned_min: f64,
-    /// Reused candidate list for forks: (metric, parent lane, bit).
+    /// Reused candidate list for repetition forks: (metric, parent lane, bit).
     candidates: Vec<(f64, usize, bool)>,
+    /// Reused workspace for RM(1, d) Fast Walsh–Hadamard Transform.
+    fwht: Vec<[f32; L]>,
+    /// Reused compact candidate list for RM(1, d) forks: (metric, parent lane, (a << 1) | b).
+    fwht_cands: Vec<(f32, u16, u32)>,
 }
 
 impl<const L: usize> ListDecoder<L> {
@@ -121,6 +139,8 @@ impl<const L: usize> ListDecoder<L> {
             order: Vec::with_capacity(L),
             pruned_min: f64::INFINITY,
             candidates: Vec::with_capacity(2 * L),
+            fwht: vec![[0.0; L]; n],
+            fwht_cands: Vec::with_capacity(L * 16),
         }
     }
 
@@ -147,6 +167,10 @@ impl<const L: usize> ListDecoder<L> {
             }
             Subtree::Repetition => {
                 self.fork_repetition(dim, offset);
+                return;
+            }
+            Subtree::FirstOrder => {
+                self.fork_first_order(dim, offset);
                 return;
             }
             Subtree::Free if self.list_size == 1 => {
@@ -279,6 +303,193 @@ impl<const L: usize> ListDecoder<L> {
         }
         self.sums[offset..offset + len].fill(bits);
         self.active = self.candidates.len();
+    }
+
+    /// Finish a first-order Reed–Muller subtree RM(1, d) at level `dim` covering
+    /// `offset..offset + 2^dim` via Fast Walsh–Hadamard Transform (Green 1966; Dumer 2004).
+    ///
+    /// For each codeword `c_{a,b}(x) = popcount(a & x) ^ b`, the exact disagreement cost is
+    /// `0.5 * (sum(|L|) - (-1)^b * H[a])`, where `H` is the FWHT of the subtree's LLRs.
+    fn fork_first_order(&mut self, dim: u32, offset: usize) {
+        let len = 1usize << dim;
+        let level = Self::level(dim);
+
+        // 1. Copy LLRs into `self.fwht[..len]` and accumulate `abs_sum = sum(|L|)` per lane.
+        let mut abs_sum = [0.0f32; L];
+        for (dst, src) in self.fwht[..len].iter_mut().zip(&self.llrs[level..level + len]) {
+            *dst = *src;
+            for k in 0..L {
+                abs_sum[k] += src[k].abs();
+            }
+        }
+
+        // 2. In-place Fast Walsh–Hadamard Transform across all L lanes simultaneously.
+        let mut half = 1;
+        while half < len {
+            for block in self.fwht[..len].chunks_exact_mut(2 * half) {
+                let (lo, hi) = block.split_at_mut(half);
+                for (a, b) in lo.iter_mut().zip(hi.iter_mut()) {
+                    for k in 0..L {
+                        let x = a[k];
+                        let y = b[k];
+                        a[k] = x + y;
+                        b[k] = x - y;
+                    }
+                }
+            }
+            half *= 2;
+        }
+
+        // Fast path for greedy L = 1: pick the single largest |H[a]| and track the runner-up.
+        if self.list_size == 1 {
+            let mut best_a = 0usize;
+            let mut best_abs = -1.0f32;
+            let mut best_h = 0.0f32;
+            let mut second_abs = -1.0f32;
+            for a in 0..len {
+                let h = self.fwht[a][0];
+                let ha = h.abs();
+                if ha > best_abs {
+                    second_abs = best_abs;
+                    best_abs = ha;
+                    best_h = h;
+                    best_a = a;
+                } else if ha > second_abs {
+                    second_abs = ha;
+                }
+            }
+            let s = f64::from(abs_sum[0]);
+            let m = self.metrics[0];
+            let best_cost = (0.5 * (s - f64::from(best_abs))).max(0.0);
+            let drop_cost = (0.5 * (s - f64::from(second_abs)))
+                .min(0.5 * (s + f64::from(best_abs)))
+                .max(0.0);
+            self.metrics[0] = m + best_cost;
+            self.pruned_min = self.pruned_min.min(m + drop_cost);
+            let b = best_h < 0.0;
+            for x in 0..len {
+                self.sums[offset + x][0] = ((best_a & x).count_ones() & 1 != 0) ^ b;
+            }
+            return;
+        }
+
+        // 3. Collect compact candidates `(metric, parent, (a << 1) | b)` across active paths.
+        //    For any `a`, the better sign has cost `(s - |H[a]|) / 2 <= s / 2` while the
+        //    opposite sign has cost `(s + |H[a]|) / 2 >= s / 2`. When `len >= list_size`,
+        //    no opposite-sign codeword can beat the `len` better-sign codewords of the same
+        //    parent, so we only push better-sign candidates and track the cheapest opposite-sign
+        //    one for `pruned_min`.
+        self.fwht_cands.clear();
+        for p in 0..self.active {
+            let m = self.metrics[p] as f32;
+            let s = abs_sum[p];
+            let start_idx = self.fwht_cands.len();
+            if len >= self.list_size {
+                let mut min_abs_h = f32::INFINITY;
+                for a in 0..len {
+                    let h = self.fwht[a][p];
+                    let ha = h.abs();
+                    if ha < min_abs_h {
+                        min_abs_h = ha;
+                    }
+                    let c = (0.5 * (s - ha)).max(0.0);
+                    let code = ((a as u32) << 1) | u32::from(h < 0.0);
+                    self.fwht_cands.push((m + c, p as u16, code));
+                }
+                let opp_min = m + 0.5 * (s + min_abs_h);
+                self.pruned_min = self.pruned_min.min(f64::from(opp_min));
+            } else {
+                for a in 0..len {
+                    let h = self.fwht[a][p];
+                    let c0 = (0.5 * (s - h)).max(0.0);
+                    let c1 = (0.5 * (s + h)).max(0.0);
+                    let a2 = (a as u32) << 1;
+                    self.fwht_cands.push((m + c0, p as u16, a2));
+                    self.fwht_cands.push((m + c1, p as u16, a2 | 1));
+                }
+            }
+            let count = self.fwht_cands.len() - start_idx;
+            if count > 2 * self.list_size {
+                let slice = &mut self.fwht_cands[start_idx..];
+                slice.select_nth_unstable_by(self.list_size - 1, |a, b| a.0.total_cmp(&b.0));
+                let lowest = slice[self.list_size..]
+                    .iter()
+                    .map(|c| c.0)
+                    .fold(f32::INFINITY, f32::min);
+                self.pruned_min = self.pruned_min.min(f64::from(lowest));
+                self.fwht_cands.truncate(start_idx + self.list_size);
+            }
+        }
+
+        if self.fwht_cands.len() > self.list_size {
+            self.fwht_cands
+                .select_nth_unstable_by(self.list_size - 1, |a, b| a.0.total_cmp(&b.0));
+            let dropped = &self.fwht_cands[self.list_size..];
+            let lowest = dropped.iter().map(|c| c.0).fold(f32::INFINITY, f32::min);
+            self.pruned_min = self.pruned_min.min(f64::from(lowest));
+            self.fwht_cands.truncate(self.list_size);
+        }
+
+        // 4. Assign lanes: first surviving child of each parent keeps the parent's lane;
+        //    all additional surviving children move into dead lanes and copy history in place.
+        let mut kept = [false; L];
+        let mut lane_code = [0u32; L];
+        for &(metric, parent_u16, code) in &self.fwht_cands {
+            let parent = parent_u16 as usize;
+            if !kept[parent] {
+                kept[parent] = true;
+                self.metrics[parent] = f64::from(metric);
+                lane_code[parent] = code;
+            }
+        }
+        let mut free = (0..L).filter(|&lane| !kept[lane]);
+        let mut first = [true; L];
+        let mut moves = [(0usize, 0usize); L];
+        let mut n_moves = 0;
+        for &(metric, parent_u16, code) in &self.fwht_cands {
+            let parent = parent_u16 as usize;
+            if first[parent] {
+                first[parent] = false;
+                continue;
+            }
+            let lane = free.next().expect("at most L children survive");
+            self.metrics[lane] = f64::from(metric);
+            lane_code[lane] = code;
+            moves[n_moves] = (lane, parent);
+            n_moves += 1;
+        }
+        let moves = &moves[..n_moves];
+
+        if !moves.is_empty() {
+            for entry in &mut self.sums[..offset] {
+                for &(lane, parent) in moves {
+                    entry[lane] = entry[parent];
+                }
+            }
+            for d in dim + 1..self.dims {
+                if offset & (1 << (d - 1)) == 0 {
+                    let level = Self::level(d);
+                    for entry in &mut self.llrs[level..level + (1 << d)] {
+                        for &(lane, parent) in moves {
+                            entry[lane] = entry[parent];
+                        }
+                    }
+                }
+            }
+        }
+
+        let new_active = self.fwht_cands.len();
+        for x in 0..len {
+            let mut bits = [false; L];
+            for k in 0..new_active {
+                let code = lane_code[k];
+                let a = (code >> 1) as usize;
+                let b = (code & 1) != 0;
+                bits[k] = ((a & x).count_ones() & 1 != 0) ^ b;
+            }
+            self.sums[offset + x] = bits;
+        }
+        self.active = new_active;
     }
 }
 

@@ -218,3 +218,26 @@ fn nested_ensemble_n512_and_n1024() {
         assert!(errs == 0, "RM({r},{m}) @ {db}dB had {errs}/{trials} errors");
     }
 }
+
+#[test]
+fn first_order_codes_past_sixteen_dims() {
+    // The FWHT leaf decodes all of RM(1, m) in one step; its Walsh index needs m bits.
+    let mut rng = Rng(0xF1_0016);
+    for m in [15, 16, 17] {
+        let rm = ReedMuller::new(1, m).unwrap();
+        for _ in 0..3 {
+            let message: Vec<bool> = (0..rm.message_len()).map(|_| rng.next() & 1 == 1).collect();
+            let mut llrs: Vec<f64> =
+                rm.encode(&message).unwrap().iter().map(|&b| if b { 1.0 } else { -1.0 }).collect();
+            // Flip one bit in eight: far inside half the minimum distance 2^(m-1).
+            for i in (0..llrs.len()).step_by(8) {
+                llrs[i + rng.below(8)] *= -1.0;
+            }
+            for list_size in [1, 4, 32] {
+                let d = rm.decode_soft_checked(&llrs, list_size).unwrap();
+                assert_eq!(d.message, message, "RM(1,{m}) L={list_size}");
+                assert!(d.certified, "RM(1,{m}) L={list_size}: decoding is exact, so provably best");
+            }
+        }
+    }
+}
