@@ -123,7 +123,7 @@ fn disagreement(word: &[bool], llrs: &[f64]) -> f64 {
 #[test]
 fn ensemble_never_worse_than_plain_scl() {
     let mut rng = Rng(0xAE5C);
-    for (r, m, db) in [(1, 4, 1.0), (2, 5, 2.0), (3, 7, 2.5), (3, 8, 2.0)] {
+    for (r, m, db) in [(1, 4, 1.0), (2, 5, 2.0), (3, 7, 2.5), (3, 8, 2.0), (3, 9, 1.5)] {
         let rm = ReedMuller::new(r, m).unwrap();
         let sigma = (1.0 / (2.0 * rm.rate() * 10f64.powf(db / 10.0))).sqrt();
         let mut ensemble_err = 0;
@@ -188,4 +188,33 @@ fn certified_decisions_are_maximum_likelihood() {
         assert!(certified > 0, "RM({r},{m}) never certified");
     }
     assert!(ReedMuller::new(4, 5).unwrap().decode_soft_checked(&vec![1.0; 32], 8).is_err());
+}
+
+#[test]
+fn nested_ensemble_n512_and_n1024() {
+    let mut rng = Rng(0x512A_1024);
+    for (r, m, db, copies, list_size, trials) in [
+        (4, 9, 3.0, 8, 8, 40),
+        (4, 10, 3.0, 16, 4, 10),
+    ] {
+        let rm = ReedMuller::new(r, m).unwrap();
+        let sigma = (1.0 / (2.0 * rm.rate() * 10f64.powf(db / 10.0))).sqrt();
+        let mut errs = 0usize;
+        for _ in 0..trials {
+            let message: Vec<bool> = (0..rm.message_len()).map(|_| rng.next() & 1 == 1).collect();
+            let encoded = rm.encode(&message).unwrap();
+            let llrs: Vec<f64> = encoded
+                .iter()
+                .map(|&b| (if b { 1.0 } else { -1.0 }) + sigma * rng.gaussian())
+                .collect();
+            let d = rm.decode_soft_ensemble_checked(&llrs, list_size, copies).unwrap();
+            let got_cw = rm.encode(&d.message).unwrap();
+            assert!((d.cost - disagreement(&got_cw, &llrs)).abs() < 1e-9);
+            assert!(d.runner_up_cost >= d.cost - 1e-9);
+            if d.message != message {
+                errs += 1;
+            }
+        }
+        assert!(errs == 0, "RM({r},{m}) @ {db}dB had {errs}/{trials} errors");
+    }
 }

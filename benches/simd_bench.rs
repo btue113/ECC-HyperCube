@@ -91,4 +91,6 @@ fn main() {
     bench_single_thread(3, 8, 2.5, 32, 8, 3_000);
     bench_single_thread(4, 8, 3.5, 8, 4, 10_000);
     bench_single_thread(4, 8, 3.5, 32, 8, 5_000);
+    bench_single_thread(4, 9, 2.5, 16, 8, 1_000);
+    bench_single_thread(4, 9, 3.0, 16, 8, 2_000);
 }

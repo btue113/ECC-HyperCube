@@ -18,6 +18,9 @@ use std::sync::{Mutex, OnceLock};
 
 /// Hard cap that keeps the vertex tables comfortably within memory.
 pub const MAX_DIMS: u32 = 24;
+/// Plotkin splits the ensemble decoder takes before decoding flat. A second split cut word
+/// errors at n = 1024 for about twice the time, still well short of 5G polar codes there.
+const NEST_LEVELS: u32 = 1;
 
 #[derive(Debug)]
 pub struct CubeCode {
@@ -39,6 +42,9 @@ pub struct CubeCode {
     voters: Vec<OnceLock<Vec<HyperCube>>>,
     /// List decoders reused across calls, one per width (`list_decoder` picks the slot).
     list_decoders: Mutex<Vec<Option<Box<dyn ListDecode>>>>,
+    /// Lazily constructed Plotkin subcodes `(RM(r-1, m-1), RM(r, m-1))` for nested
+    /// automorphism-ensemble decoding when `cw_dims >= 9`.
+    nested_children: OnceLock<Box<(CubeCode, CubeCode)>>,
 }
 
 impl CubeCode {
@@ -103,6 +109,7 @@ impl CubeCode {
             voter_complements,
             voters,
             list_decoders: Mutex::new(Vec::new()),
+            nested_children: OnceLock::new(),
         })
     }
 
@@ -350,6 +357,11 @@ impl CubeCode {
     /// shows the decoder the same word in a different order, so its mistakes differ.
     /// The first copy is the identity, so the result is never worse than plain SCL.
     ///
+    /// For large cubes (`cw_dims >= 9`, `n >= 512`) with `2 <= r <= m - 2`, the copies after
+    /// the first split the cube once by Plotkin's decomposition `RM(r, m) = (u, u ^ v)` with
+    /// `u in RM(r-1, m-1)` and `v in RM(r, m-1)`, running an ensemble on each half inside
+    /// each outer relabelling.
+    ///
     /// Decoding stops at the first copy whose best word is proven maximum likelihood.
     /// The best codeword is the same in every copy, so one copy's proof covers them all.
     pub(crate) fn decode_soft_ensemble_with_zero(
@@ -363,28 +375,77 @@ impl CubeCode {
             return Err(Error::Unsupported("ensemble decoding needs p_dims > 0"));
         }
         let list_size = list_size.clamp(1, MAX_LIST_SIZE);
-        let min_distance = 1usize << (self.p_dims + 1);
-        let n = self.cw_len + 1;
+        let ensemble_size = ensemble_size.max(1);
         let y = self.vertex_readings(received, zero_vertex_llr);
-        let message = |word: &[bool]| -> Bits {
-            self.bit_to_cube[..self.data_len].iter().map(|&v| word[v as usize]).collect()
-        };
+        let mut best = vec![false; self.cw_len + 1];
+        let (cost, runner_up_cost, pruned_bound, distance_certified) =
+            self.decode_vertices_ensemble(&y, list_size, ensemble_size, NEST_LEVELS, &mut best);
+        let message =
+            self.bit_to_cube[..self.data_len].iter().map(|&v| best[v as usize]).collect();
+        Ok(SoftDecision {
+            message,
+            cost,
+            runner_up_cost,
+            pruned_bound,
+            distance_certified,
+            certified: distance_certified || cost <= pruned_bound,
+        })
+    }
+
+    /// Vertex-domain ensemble decoder shared by top-level and recursive Plotkin calls.
+    /// Writes the winning codeword (in vertex order `0..2^cw_dims`) into `best` and returns
+    /// `(cost, runner_up_cost, pruned_bound, distance_certified)`. `nest_levels` caps how
+    /// many Plotkin splits may still be taken on the way down.
+    fn decode_vertices_ensemble(
+        &self,
+        y: &[f64],
+        list_size: usize,
+        ensemble_size: usize,
+        nest_levels: u32,
+        best: &mut [bool],
+    ) -> (f64, f64, f64, bool) {
+        let n = self.cw_len + 1;
 
         // Fast path: the hard-decision word is already a codeword, at cost 0.
         let mut mask: Bits = y.iter().map(|&l| l > 0.0).collect();
         let hard = mask.clone();
         superset_xor(&mut mask);
         if (0..n).all(|v| self.is_unfrozen[v] || !mask[v]) {
-            return Ok(SoftDecision {
-                message: message(&hard),
-                cost: 0.0,
-                runner_up_cost: f64::INFINITY,
-                pruned_bound: f64::INFINITY,
-                distance_certified: true,
-                certified: true,
-            });
+            best.copy_from_slice(&hard);
+            return (0.0, f64::INFINITY, f64::INFINITY, true);
         }
 
+        // For n >= 512 and 2 <= r <= m - 2, recurse via Plotkin's decomposition
+        // RM(r, m) = {(c1 ^ u, c1) : u in RM(r-1, m-1), c1 in RM(r, m-1)}. At r = 1 the
+        // `u` half is a repetition code and the flat ensemble makes fewer errors.
+        if nest_levels > 0
+            && self.cw_dims >= 9
+            && ensemble_size > 1
+            && self.p_dims >= 1
+            && self.p_dims + 2 < self.cw_dims
+        {
+            return self.decode_vertices_nested_ensemble(
+                y,
+                list_size,
+                ensemble_size,
+                nest_levels,
+                best,
+            );
+        }
+        self.decode_vertices_flat(y, list_size, ensemble_size, best)
+    }
+
+    /// Automorphism-ensemble SCL on the whole cube: copy 0 is the identity, the rest are
+    /// random affine relabellings.
+    fn decode_vertices_flat(
+        &self,
+        y: &[f64],
+        list_size: usize,
+        ensemble_size: usize,
+        best: &mut [bool],
+    ) -> (f64, f64, f64, bool) {
+        let n = self.cw_len + 1;
+        let min_distance = 1usize << (self.p_dims + 1);
         let mut guard = self.list_decoders.lock().unwrap_or_else(|e| e.into_inner());
         let decoder = list_decoder(&mut guard, self.cw_dims, list_size);
         let mut word = Vec::with_capacity(n);
@@ -392,7 +453,6 @@ impl CubeCode {
         let mut seed = 0x9E37_79B9_7F4A_7C15u64;
         let mut perm = vec![0u32; n];
         let mut y_perm = vec![0.0; n];
-        let mut best = vec![false; n];
         let mut best_cost = f64::INFINITY;
         let mut best_flips = usize::MAX;
         let mut distance_certified = false;
@@ -402,7 +462,7 @@ impl CubeCode {
         // `pruned_min`, so the best word is maximum likelihood once it costs no more than
         // the largest of these bounds.
         let mut pruned_bound = 0.0f64;
-        for copy in 0..ensemble_size.max(1) {
+        for copy in 0..ensemble_size {
             if copy == 0 {
                 for x in 0..n {
                     perm[x] = x as u32;
@@ -439,7 +499,7 @@ impl CubeCode {
                 for (&c, &p) in word.iter().zip(&perm) {
                     best[p as usize] = c;
                 }
-                distance_certified = is_ml_certified(&best, &y, min_distance);
+                distance_certified = is_ml_certified(best, y, min_distance);
                 agreements = 1;
             } else if cost <= best_cost + 1e-9
                 && word.iter().zip(&perm).all(|(&c, &p)| c == best[p as usize])
@@ -454,6 +514,9 @@ impl CubeCode {
             // (not proofs) also stop: the best word is within d/2 - 1 flips of the hard
             // decision, where it is the unique nearest codeword in Hamming distance; or three
             // copies with lists agree on it (greedy L = 1 copies agree on wrong words too often).
+            // Three, not two, also inside the Plotkin decoder's `u` step: two was free at
+            // (512, 256) but gave 18% more word errors at (512, 130), where `u` is the weaker
+            // RM(2, 8).
             if distance_certified
                 || best_cost <= pruned_bound
                 || best_flips < self.needed_votes
@@ -462,14 +525,150 @@ impl CubeCode {
                 break;
             }
         }
-        Ok(SoftDecision {
-            message: message(&best),
-            cost: best_cost,
-            runner_up_cost,
-            pruned_bound,
-            distance_certified,
-            certified: distance_certified || best_cost <= pruned_bound,
-        })
+        (best_cost, runner_up_cost, pruned_bound, distance_certified)
+    }
+
+    /// Recursive Plotkin automorphism-ensemble decoder for `cw_dims >= 9` (`n >= 512`).
+    ///
+    /// Copy 0 is plain SCL on the whole cube, so the result is never worse than SCL and
+    /// keeps the list's pruned bound as an ML certificate. Each further copy is an outer
+    /// `GA(m, 2)` relabelling (first cycling through all `m` coordinate axes for distinct
+    /// top splits, then random affine maps):
+    /// 1. Fold the top axis via min-sum to get `y_u` for `u = c0 ^ c1 in RM(r-1, m-1)`.
+    /// 2. Decode `u` with an inner ensemble on `RM(r-1, m-1)`.
+    /// 3. Combine `y_v = g(y0, y1, u)` (+3 dB SNR) and decode `c1 in RM(r, m-1)`.
+    /// 4. Reconstruct `c = (c1 ^ u, c1)` and check the Taipale–Pursley ML certificate.
+    fn decode_vertices_nested_ensemble(
+        &self,
+        y: &[f64],
+        list_size: usize,
+        ensemble_size: usize,
+        nest_levels: u32,
+        best: &mut [bool],
+    ) -> (f64, f64, f64, bool) {
+        let (mut best_cost, mut runner_up_cost, pruned_bound, mut distance_certified) =
+            self.decode_vertices_flat(y, list_size, 1, best);
+        let mut best_flips = best.iter().zip(y).filter(|&(&c, &l)| c != (l > 0.0)).count();
+        if distance_certified || best_cost <= pruned_bound || best_flips < self.needed_votes {
+            return (best_cost, runner_up_cost, pruned_bound, distance_certified);
+        }
+        let mut agreements = 1usize;
+
+        let (u_code, v_code) = self
+            .nested_children
+            .get_or_init(|| {
+                let u = CubeCode::new(self.cw_dims - 1, self.p_dims)
+                    .expect("valid RM(r-1, m-1) subcode");
+                let v = CubeCode::new(self.cw_dims - 1, self.p_dims - 1)
+                    .expect("valid RM(r, m-1) subcode");
+                Box::new((u, v))
+            })
+            .as_ref();
+
+        let n = self.cw_len + 1;
+        let half = n / 2;
+        let min_distance = 1usize << (self.p_dims + 1);
+        let u_copies = ensemble_size.clamp(4, 16);
+        let u_list = list_size;
+        let v_copies = (ensemble_size / 4).clamp(2, 4);
+        let v_list = list_size.min(4);
+
+        let mut seed = 0xD1B5_4A32_D192_ED03u64 ^ ((self.cw_dims as u64) << 32);
+        let mut perm = vec![0u32; n];
+        let mut y_u = vec![0.0; half];
+        let mut y_v = vec![0.0; half];
+        let mut u_word = vec![false; half];
+        let mut c1_word = vec![false; half];
+        let mut cand = vec![false; n];
+
+        for copy in 0..ensemble_size - 1 {
+            if copy == 0 {
+                for x in 0..n {
+                    perm[x] = x as u32;
+                }
+            } else if copy < self.cw_dims as usize {
+                // Swap the top axis with axis `cw_dims - 1 - copy` so the first `m`
+                // outer copies try all `m` distinct coordinate hyperplane splits.
+                let top = self.cw_dims - 1;
+                let other = self.cw_dims - 1 - copy as u32;
+                let mut columns = [0u32; 32];
+                for b in 0..self.cw_dims as usize {
+                    columns[b] = 1u32 << b;
+                }
+                columns.swap(top as usize, other as usize);
+                perm[0] = 0;
+                for x in 1..n {
+                    perm[x] = perm[x & (x - 1)] ^ columns[x.trailing_zeros() as usize];
+                }
+            } else {
+                let columns = random_invertible(self.cw_dims, &mut seed);
+                perm[0] = (splitmix64(&mut seed) as u32) & (self.cw_len as u32);
+                for x in 1..n {
+                    perm[x] = perm[x & (x - 1)] ^ columns[x.trailing_zeros() as usize];
+                }
+            }
+
+            // 1. Top-axis min-sum fold (in `> 0` favors 1 convention: u = c0 ^ c1).
+            for i in 0..half {
+                let a = y[perm[i] as usize];
+                let b = y[perm[half + i] as usize];
+                let s = if (a >= 0.0) == (b >= 0.0) { -1.0 } else { 1.0 };
+                y_u[i] = s * a.abs().min(b.abs());
+            }
+
+            // 2. Decode u in RM(r-1, m-1) via inner ensemble.
+            u_code.decode_vertices_ensemble(&y_u, u_list, u_copies, nest_levels - 1, &mut u_word);
+
+            // 3. Combine g(y0, y1, u) and decode c1 in RM(r, m-1).
+            for i in 0..half {
+                let a = y[perm[i] as usize];
+                let b = y[perm[half + i] as usize];
+                y_v[i] = if u_word[i] { b - a } else { b + a };
+            }
+            v_code.decode_vertices_ensemble(&y_v, v_list, v_copies, nest_levels - 1, &mut c1_word);
+
+            // 4. Reconstruct c = (c1 ^ u, c1) in unpermuted vertex order and score against y.
+            let mut cost = 0.0;
+            let mut flips = 0usize;
+            for i in 0..half {
+                let b0 = c1_word[i] ^ u_word[i];
+                let b1 = c1_word[i];
+                let p0 = perm[i] as usize;
+                let p1 = perm[half + i] as usize;
+                cand[p0] = b0;
+                cand[p1] = b1;
+                if b0 != (y[p0] > 0.0) {
+                    cost += y[p0].abs();
+                    flips += 1;
+                }
+                if b1 != (y[p1] > 0.0) {
+                    cost += y[p1].abs();
+                    flips += 1;
+                }
+            }
+
+            if cost < best_cost - 1e-9 {
+                runner_up_cost = runner_up_cost.min(best_cost);
+                best_cost = cost;
+                best_flips = flips;
+                best.copy_from_slice(&cand);
+                distance_certified = is_ml_certified(best, y, min_distance);
+                agreements = 1;
+            } else if cost <= best_cost + 1e-9 && cand == best {
+                agreements += 1;
+            } else if cost > best_cost + 1e-9 || cand != best {
+                runner_up_cost = runner_up_cost.min(cost);
+            }
+
+            if distance_certified
+                || best_cost <= pruned_bound
+                || best_flips < self.needed_votes
+                || (list_size >= 4 && agreements >= 3)
+            {
+                break;
+            }
+        }
+        (best_cost, runner_up_cost, pruned_bound, distance_certified)
     }
 
     /// Soft SCL decoding that also reports how trustworthy the answer is.
