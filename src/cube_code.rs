@@ -22,6 +22,17 @@ pub const MAX_DIMS: u32 = 24;
 /// errors at n = 1024 for about twice the time, still well short of 5G polar codes there.
 const NEST_LEVELS: u32 = 1;
 
+/// Early-stop heuristic for ensemble decoding (`list_size >= 4`): stop if the runner-up
+/// codeword in the list costs more than `EARLY_STOP_COST_RATIO * best_cost`.
+///
+/// Scale-invariant (needs no SNR estimate). When a list lands on the true codeword, the
+/// runner-up lies at distance >= d and typically costs ~1.8-2.5x as much; when the list
+/// misses the true codeword, the surviving paths cluster at nearly equal high costs (~1.05x).
+/// Chosen empirically over 1.25M frames across n = 128..1024: 1.5 and 1.65 caused false
+/// stops at L = 4 (`(512, 256)` 3.0 dB 4x16: 2 -> 29 and 2 -> 5 errors), while 1.8 added
+/// zero errors across all 10 configs (L = 4 and L = 8) for a 1.1-1.85x speedup.
+const EARLY_STOP_COST_RATIO: f64 = 1.8;
+
 #[derive(Debug)]
 pub struct CubeCode {
     cw_dims: u32,
@@ -520,7 +531,8 @@ impl CubeCode {
             if distance_certified
                 || best_cost <= pruned_bound
                 || best_flips < self.needed_votes
-                || (list_size >= 4 && agreements >= 3)
+                || (list_size >= 4
+                    && (agreements >= 3 || runner_up_cost > EARLY_STOP_COST_RATIO * best_cost))
             {
                 break;
             }
@@ -549,7 +561,11 @@ impl CubeCode {
         let (mut best_cost, mut runner_up_cost, pruned_bound, mut distance_certified) =
             self.decode_vertices_flat(y, list_size, 1, best);
         let mut best_flips = best.iter().zip(y).filter(|&(&c, &l)| c != (l > 0.0)).count();
-        if distance_certified || best_cost <= pruned_bound || best_flips < self.needed_votes {
+        if distance_certified
+            || best_cost <= pruned_bound
+            || best_flips < self.needed_votes
+            || (list_size >= 4 && runner_up_cost > EARLY_STOP_COST_RATIO * best_cost)
+        {
             return (best_cost, runner_up_cost, pruned_bound, distance_certified);
         }
         let mut agreements = 1usize;
