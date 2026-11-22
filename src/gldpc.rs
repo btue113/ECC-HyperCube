@@ -639,6 +639,10 @@ impl HypercubeGldpc {
         for (dst, &l) in scratch.t_ch.iter_mut().zip(llrs) {
             *dst = clamp_t(fast_tanh_f32(-0.5 * l));
         }
+        Ok(self.run_bp_from_t_ch(max_iters, scratch))
+    }
+
+    fn run_bp_from_t_ch(&self, max_iters: usize, scratch: &mut GldpcScratch) -> (usize, bool) {
         scratch.t_a.fill(0.0);
         scratch.t_b.fill(0.0);
 
@@ -698,7 +702,7 @@ impl HypercubeGldpc {
             }
             half_iters += 1;
             if self.all_syndromes_zero_tanh(&scratch.t_tot) {
-                return Ok((half_iters, true));
+                return (half_iters, true);
             }
 
             // Half-iter 2: Group B — RM(2, 4) for Rate3_8 or RM(3, 5) for Rate1_2.
@@ -781,10 +785,10 @@ impl HypercubeGldpc {
             }
             half_iters += 1;
             if self.all_syndromes_zero_tanh(&scratch.t_tot) {
-                return Ok((half_iters, true));
+                return (half_iters, true);
             }
         }
-        Ok((half_iters, false))
+        (half_iters, false)
     }
 
     #[inline]
@@ -874,22 +878,36 @@ impl HypercubeGldpc {
 mod tests {
     use super::*;
 
+    fn gaussian(rng: &mut XorShift64) -> f64 {
+        let a = ((rng.next() >> 11) as f64 + 0.5) / ((1u64 << 53) as f64);
+        let b = ((rng.next() >> 11) as f64 + 0.5) / ((1u64 << 53) as f64);
+        (-2.0 * a.ln()).sqrt() * (2.0 * std::f64::consts::PI * b).cos()
+    }
+
     #[test]
     fn exact_dimensions() {
+        assert_eq!(HypercubeGldpc::new(256, GldpcRate::Rate3_8).unwrap().message_len(), 97);
         assert_eq!(HypercubeGldpc::new(512, GldpcRate::Rate3_8).unwrap().message_len(), 193);
         assert_eq!(HypercubeGldpc::new(1024, GldpcRate::Rate3_8).unwrap().message_len(), 385);
+        assert_eq!(HypercubeGldpc::new(2048, GldpcRate::Rate3_8).unwrap().message_len(), 769);
         assert_eq!(HypercubeGldpc::new(512, GldpcRate::Rate1_2).unwrap().message_len(), 257);
         assert_eq!(HypercubeGldpc::new(1024, GldpcRate::Rate1_2).unwrap().message_len(), 513);
+        assert_eq!(HypercubeGldpc::new(2048, GldpcRate::Rate1_2).unwrap().message_len(), 1025);
+        assert!(HypercubeGldpc::new(128, GldpcRate::Rate3_8).is_err());
+        assert!(HypercubeGldpc::new(256, GldpcRate::Rate1_2).is_err());
     }
 
     #[test]
     fn systematic_encode_and_noisy_decode_round_trip() {
         let mut rng = XorShift64(0xCAFE_BABE_1234_5678);
         for &(n, rate) in &[
+            (256, GldpcRate::Rate3_8),
             (512, GldpcRate::Rate3_8),
             (1024, GldpcRate::Rate3_8),
+            (2048, GldpcRate::Rate3_8),
             (512, GldpcRate::Rate1_2),
             (1024, GldpcRate::Rate1_2),
+            (2048, GldpcRate::Rate1_2),
         ] {
             let code = HypercubeGldpc::new(n, rate).unwrap();
             let msg: Bits = (0..code.message_len()).map(|_| (rng.next() & 1) != 0).collect();
@@ -901,10 +919,45 @@ mod tests {
             for i in (0..n).step_by(47) {
                 llrs[i] = -llrs[i] * 0.4;
             }
-            let dec = code.decode_soft(&llrs, 24).unwrap();
+            let dec = code.decode_soft(&llrs, 50).unwrap();
             assert!(dec.converged);
             assert_eq!(dec.codeword, cw);
             assert_eq!(dec.message, msg);
+        }
+    }
+
+    #[test]
+    fn random_codeword_awgn_converged_matches_valid() {
+        let mut rng = XorShift64(0x5EED_A764_1234_9999);
+        for &(n, rate, db) in &[
+            (512, GldpcRate::Rate1_2, 3.0f64),
+            (1024, GldpcRate::Rate1_2, 2.5f64),
+        ] {
+            let code = HypercubeGldpc::new(n, rate).unwrap();
+            let r = code.message_len() as f64 / n as f64;
+            let sigma = (1.0 / (2.0 * r * 10f64.powf(db / 10.0))).sqrt();
+            let scale = (2.0 / (sigma * sigma)) as f32;
+            let mut scratch = code.scratch();
+            let mut llrs = vec![0.0f32; n];
+            let mut converged_count = 0usize;
+
+            for _ in 0..40 {
+                let msg: Bits = (0..code.message_len()).map(|_| (rng.next() & 1) != 0).collect();
+                let cw = code.encode(&msg).unwrap();
+                for (dst, &bit) in llrs.iter_mut().zip(&cw) {
+                    let tx = if bit { 1.0 } else { -1.0 };
+                    *dst = scale * (tx + sigma * gaussian(&mut rng)) as f32;
+                }
+                let (_, converged) = code.decode_into_scratch(&llrs, 50, &mut scratch).unwrap();
+                let dec_cw: Bits = (0..n).map(|i| scratch.bit(i)).collect();
+                assert_eq!(converged, code.is_valid_codeword(&dec_cw));
+                if converged {
+                    assert_eq!(dec_cw, cw);
+                    assert_eq!(code.extract_message(&dec_cw).unwrap(), msg);
+                    converged_count += 1;
+                }
+            }
+            assert!(converged_count >= 38, "expected >=38/40 converged, got {converged_count}");
         }
     }
 }
