@@ -81,16 +81,12 @@ impl XorShift64 {
 
 #[inline(always)]
 fn is_valid_ehamming16(bits: u32) -> bool {
-    if bits.count_ones() & 1 != 0 {
-        return false;
-    }
-    let mut syn = 0usize;
-    let mut b = bits;
-    while b != 0 {
-        syn ^= b.trailing_zeros() as usize;
-        b &= b - 1;
-    }
-    syn == 0
+    let p0 = bits.count_ones();
+    let p1 = (bits & 0xAAAA).count_ones();
+    let p2 = (bits & 0xCCCC).count_ones();
+    let p3 = (bits & 0xF0F0).count_ones();
+    let p4 = (bits & 0xFF00).count_ones();
+    ((p0 | p1 | p2 | p3 | p4) & 1) == 0
 }
 
 /// Branchless, vectorizable `tanh(x)` via Padé `[5/4]` on `x/2` + exact half-angle doubling
@@ -106,12 +102,7 @@ fn fast_tanh_f32(x: f32) -> f32 {
 
 #[inline(always)]
 fn clamp_t(v: f32) -> f32 {
-    let v = v.clamp(-0.99995, 0.99995);
-    if v.abs() < 1e-4 {
-        if v < 0.0 { -1e-4 } else { 1e-4 }
-    } else {
-        v
-    }
+    v.abs().clamp(1e-4, 0.99995).copysign(v)
 }
 
 /// Hartmann-Rudolph (1976) exact-MAP SISO in pure `tanh` domain for 8 `RM(2, 4) = (16, 11)` 4-cubes.
@@ -425,10 +416,10 @@ impl HypercubeGldpc {
             });
         }
         let num_blocks = self.n / 16;
-        for (dst, &l) in scratch.t_tot.iter_mut().zip(llrs) {
-            *dst = -l;
-        }
-        if self.all_syndromes_zero_tanh(&scratch.t_tot) {
+        if self.all_syndromes_zero_llr(llrs) {
+            for (dst, &l) in scratch.t_tot.iter_mut().zip(llrs) {
+                *dst = -l;
+            }
             return Ok((0, true));
         }
         for (dst, &l) in scratch.t_ch.iter_mut().zip(llrs) {
@@ -443,25 +434,45 @@ impl HypercubeGldpc {
 
         for iter in 0..max_iters {
             for grp in 0..(num_blocks / 8) {
-                for k in 0..8 {
-                    let base = (grp * 8 + k) * 16;
+                let gbase = grp * 128;
+                if iter == 0 {
                     for x in 0..16 {
-                        let tc = scratch.t_ch[base + x];
-                        let tb = scratch.t_b[base + x];
-                        in_buf[x][k] = clamp_t((tc + tb) / (1.0 + tc * tb));
+                        for k in 0..8 {
+                            in_buf[x][k] = scratch.t_ch[gbase + k * 16 + x];
+                        }
+                    }
+                } else {
+                    for x in 0..16 {
+                        let mut tc = [0.0f32; 8];
+                        let mut tb = [0.0f32; 8];
+                        for k in 0..8 {
+                            let idx = gbase + k * 16 + x;
+                            tc[k] = scratch.t_ch[idx];
+                            tb[k] = scratch.t_b[idx];
+                        }
+                        for k in 0..8 {
+                            in_buf[x][k] = clamp_t((tc[k] + tb[k]) / (1.0 + tc[k] * tb[k]));
+                        }
                     }
                 }
                 hr_map_siso_tanh_16x8(&in_buf, &mut ext_buf);
-                for k in 0..8 {
-                    let base = (grp * 8 + k) * 16;
+                if iter == 0 {
                     for x in 0..16 {
-                        let ta = if iter == 0 {
-                            ext_buf[x][k]
-                        } else {
-                            0.75 * ext_buf[x][k] + 0.25 * scratch.t_a[base + x]
-                        };
-                        scratch.t_a[base + x] = ta;
-                        scratch.t_tot[base + x] = in_buf[x][k] + ta;
+                        for k in 0..8 {
+                            let idx = gbase + k * 16 + x;
+                            let ta = ext_buf[x][k];
+                            scratch.t_a[idx] = ta;
+                            scratch.t_tot[idx] = in_buf[x][k] + ta;
+                        }
+                    }
+                } else {
+                    for x in 0..16 {
+                        for k in 0..8 {
+                            let idx = gbase + k * 16 + x;
+                            let ta = 0.75 * ext_buf[x][k] + 0.25 * scratch.t_a[idx];
+                            scratch.t_a[idx] = ta;
+                            scratch.t_tot[idx] = in_buf[x][k] + ta;
+                        }
                     }
                 }
             }
@@ -471,27 +482,37 @@ impl HypercubeGldpc {
             }
 
             for grp in 0..(num_blocks / 8) {
-                for k in 0..8 {
-                    let base = (grp * 8 + k) * 16;
-                    for x in 0..16 {
-                        let p = self.perm[base + x];
-                        let tc = scratch.t_ch[p];
-                        let ta = scratch.t_a[p];
-                        in_buf[x][k] = clamp_t((tc + ta) / (1.0 + tc * ta));
+                let gbase = grp * 128;
+                for x in 0..16 {
+                    let mut tc = [0.0f32; 8];
+                    let mut ta = [0.0f32; 8];
+                    for k in 0..8 {
+                        let p = self.perm[gbase + k * 16 + x];
+                        tc[k] = scratch.t_ch[p];
+                        ta[k] = scratch.t_a[p];
+                    }
+                    for k in 0..8 {
+                        in_buf[x][k] = clamp_t((tc[k] + ta[k]) / (1.0 + tc[k] * ta[k]));
                     }
                 }
                 hr_map_siso_tanh_16x8(&in_buf, &mut ext_buf);
-                for k in 0..8 {
-                    let base = (grp * 8 + k) * 16;
+                if iter == 0 {
                     for x in 0..16 {
-                        let p = self.perm[base + x];
-                        let tb = if iter == 0 {
-                            ext_buf[x][k]
-                        } else {
-                            0.75 * ext_buf[x][k] + 0.25 * scratch.t_b[p]
-                        };
-                        scratch.t_b[p] = tb;
-                        scratch.t_tot[p] = in_buf[x][k] + tb;
+                        for k in 0..8 {
+                            let p = self.perm[gbase + k * 16 + x];
+                            let tb = ext_buf[x][k];
+                            scratch.t_b[p] = tb;
+                            scratch.t_tot[p] = in_buf[x][k] + tb;
+                        }
+                    }
+                } else {
+                    for x in 0..16 {
+                        for k in 0..8 {
+                            let p = self.perm[gbase + k * 16 + x];
+                            let tb = 0.75 * ext_buf[x][k] + 0.25 * scratch.t_b[p];
+                            scratch.t_b[p] = tb;
+                            scratch.t_tot[p] = in_buf[x][k] + tb;
+                        }
                     }
                 }
             }
@@ -504,14 +525,12 @@ impl HypercubeGldpc {
     }
 
     #[inline]
-    fn all_syndromes_zero_tanh(&self, t_tot: &[f32]) -> bool {
+    fn all_syndromes_zero_llr(&self, ch: &[f32]) -> bool {
         for a in 0..(self.n / 16) {
             let base = a * 16;
             let mut bits = 0u32;
             for i in 0..16 {
-                if t_tot[base + i] < 0.0 {
-                    bits |= 1u32 << i;
-                }
+                bits |= (((-ch[base + i]).to_bits()) >> 31) << i;
             }
             if !is_valid_ehamming16(bits) {
                 return false;
@@ -521,9 +540,32 @@ impl HypercubeGldpc {
             let base = b * 16;
             let mut bits = 0u32;
             for i in 0..16 {
-                if t_tot[self.perm[base + i]] < 0.0 {
-                    bits |= 1u32 << i;
-                }
+                bits |= (((-ch[self.perm[base + i]]).to_bits()) >> 31) << i;
+            }
+            if !is_valid_ehamming16(bits) {
+                return false;
+            }
+        }
+        true
+    }
+
+    #[inline]
+    fn all_syndromes_zero_tanh(&self, t_tot: &[f32]) -> bool {
+        for a in 0..(self.n / 16) {
+            let base = a * 16;
+            let mut bits = 0u32;
+            for i in 0..16 {
+                bits |= (t_tot[base + i].to_bits() >> 31) << i;
+            }
+            if !is_valid_ehamming16(bits) {
+                return false;
+            }
+        }
+        for b in 0..(self.n / 16) {
+            let base = b * 16;
+            let mut bits = 0u32;
+            for i in 0..16 {
+                bits |= (t_tot[self.perm[base + i]].to_bits() >> 31) << i;
             }
             if !is_valid_ehamming16(bits) {
                 return false;
