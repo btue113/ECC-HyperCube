@@ -103,15 +103,15 @@ fn main() {
     let c512_r50 = HypercubeGldpc::new(512, GldpcRate::Rate1_2).unwrap();
     let c1024_r50 = HypercubeGldpc::new(1024, GldpcRate::Rate1_2).unwrap();
 
-    bench_point(&c512_r38, 2.5, 24, 200_000, 100, threads);
-    bench_point(&c512_r38, 3.0, 24, 200_000, 100, threads);
-    bench_point(&c1024_r38, 2.5, 24, 200_000, 100, threads);
-    bench_point(&c1024_r38, 3.0, 24, 300_000, 100, threads);
+    bench_point(&c512_r38, 2.5, 50, 200_000, 100, threads);
+    bench_point(&c512_r38, 3.0, 50, 200_000, 100, threads);
+    bench_point(&c1024_r38, 2.5, 50, 200_000, 100, threads);
+    bench_point(&c1024_r38, 3.0, 50, 300_000, 100, threads);
 
-    bench_point(&c512_r50, 2.5, 24, 200_000, 100, threads);
-    bench_point(&c512_r50, 3.0, 24, 200_000, 100, threads);
-    bench_point(&c512_r50, 3.5, 24, 300_000, 100, threads);
-    bench_point(&c1024_r50, 2.0, 24, 200_000, 100, threads);
-    bench_point(&c1024_r50, 2.5, 24, 200_000, 100, threads);
-    bench_point(&c1024_r50, 3.0, 24, 300_000, 100, threads);
+    bench_point(&c512_r50, 2.5, 50, 200_000, 100, threads);
+    bench_point(&c512_r50, 3.0, 50, 200_000, 100, threads);
+    bench_point(&c512_r50, 3.5, 50, 300_000, 100, threads);
+    bench_point(&c1024_r50, 2.0, 50, 200_000, 100, threads);
+    bench_point(&c1024_r50, 2.5, 50, 200_000, 100, threads);
+    bench_point(&c1024_r50, 3.0, 50, 300_000, 100, threads);
 }
