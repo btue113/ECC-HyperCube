@@ -15,11 +15,13 @@
 #![forbid(unsafe_code)]
 
 pub mod cube_code;
+pub mod gldpc;
 pub mod hypercube;
 mod list_decoder;
 pub mod reed_muller;
 
 pub use cube_code::{CubeCode, SoftDecision};
+pub use gldpc::{GldpcDecision, GldpcRate, GldpcScratch, HypercubeGldpc};
 pub use hypercube::HyperCube;
 pub use reed_muller::ReedMuller;
 
