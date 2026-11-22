@@ -3,9 +3,11 @@
 //! Each codeword bit participates in two extended-Hamming hypercube check nodes (Tanner 1981):
 //! - **Rate 3/8** (`GldpcRate::Rate3_8`): Group A = `RM(2, 4) = (16, 11)` 4-cubes,
 //!   Group B = `RM(2, 4) = (16, 11)` 4-cubes (`(512, 193)`, `(1024, 385)`).
+//! - **Rate 1/2** (`GldpcRate::Rate1_2`): Group A = `RM(2, 4) = (16, 11)` 4-cubes,
+//!   Group B = `RM(3, 5) = (32, 26)` 5-cubes (`(512, 257)`, `(1024, 513)`).
 //!
 //! Every check node is decoded with exact-MAP soft-in/soft-out (Hartmann & Rudolph 1976)
-//! directly in the `tanh(-L/2)` domain using a 4-stage Walsh product butterfly and
+//! directly in the `tanh(-L/2)` domain using a 4- or 5-stage Walsh product butterfly and
 //! fast Walsh-Hadamard transform (FWHT) over 8 hypercubes in lockstep (`[f32; 8]`).
 //! Zero `tanh()` or `ln()` calls appear inside the iteration loop.
 
@@ -16,14 +18,20 @@ use crate::{Bits, Error};
 pub enum GldpcRate {
     /// Group A = `RM(2, 4)` (16, 11), Group B = `RM(2, 4)` (16, 11). Exact rate ≈ 3/8.
     Rate3_8,
+    /// Group A = `RM(2, 4)` (16, 11), Group B = `RM(3, 5)` (32, 26). Exact rate ≈ 1/2.
+    Rate1_2,
 }
 
 /// Result of soft-decision GLDPC decoding.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GldpcDecision {
+    /// Decoded systematic message bits (length `k`).
     pub message: Bits,
+    /// Decoded codeword bits (length `n`).
     pub codeword: Bits,
+    /// Number of half-iterations executed (`0` if hard decisions already satisfied all checks).
     pub half_iters: usize,
+    /// `true` if all Group-A and Group-B hypercube syndromes were zero.
     pub converged: bool,
 }
 
@@ -46,11 +54,14 @@ impl GldpcScratch {
         }
     }
 
+    /// Inspect decoded bit `i` after `decode_into_scratch`.
     #[inline]
-    pub fn bit(&self, flat_idx: usize) -> bool {
-        self.t_tot[flat_idx] < 0.0
+    pub fn bit(&self, idx: usize) -> bool {
+        self.t_tot[idx] < 0.0
     }
 
+    /// Returns `true` if any bit in the decoded codeword is `1` (`true`).
+    /// Useful for all-zero codeword AWGN benchmarks without unpacking `Bits`.
     #[inline]
     pub fn any_bit_one(&self) -> bool {
         self.t_tot.iter().any(|&v| v < 0.0)
@@ -63,9 +74,13 @@ pub struct HypercubeGldpc {
     n: usize,
     k: usize,
     rate: GldpcRate,
+    /// Group-B permutation in flat bit order (`0..n`).
     perm: Vec<usize>,
+    /// Indices of the `k` systematic information bits in `0..n`.
     info_cols: Vec<usize>,
+    /// Indices of the `n - k` parity bits in `0..n`.
     parity_cols: Vec<usize>,
+    /// For each parity bit `p`, bitmask over `0..k` (in `u64` words) specifying which info bits XOR into `parity_cols[p]`.
     parity_masks: Vec<Vec<u64>>,
 }
 
@@ -87,6 +102,17 @@ fn is_valid_ehamming16(bits: u32) -> bool {
     let p3 = (bits & 0xF0F0).count_ones();
     let p4 = (bits & 0xFF00).count_ones();
     ((p0 | p1 | p2 | p3 | p4) & 1) == 0
+}
+
+#[inline(always)]
+fn is_valid_ehamming32(bits: u32) -> bool {
+    let p0 = bits.count_ones();
+    let p1 = (bits & 0xAAAA_AAAA).count_ones();
+    let p2 = (bits & 0xCCCC_CCCC).count_ones();
+    let p3 = (bits & 0xF0F0_F0F0).count_ones();
+    let p4 = (bits & 0xFF00_FF00).count_ones();
+    let p5 = (bits & 0xFFFF_0000).count_ones();
+    ((p0 | p1 | p2 | p3 | p4 | p5) & 1) == 0
 }
 
 /// Branchless, vectorizable `tanh(x)` via Padé `[5/4]` on `x/2` + exact half-angle doubling
@@ -172,6 +198,74 @@ fn hr_map_siso_tanh_16x8(t_in: &[[f32; 8]; 16], t_ext: &mut [[f32; 8]; 16]) {
     }
 }
 
+/// Hartmann-Rudolph (1976) exact-MAP SISO in pure `tanh` domain for 8 `RM(3, 5) = (32, 26)` 5-cubes.
+#[inline]
+fn hr_map_siso_tanh_32x8(t_in: &[[f32; 8]; 32], t_ext: &mut [[f32; 8]; 32]) {
+    let mut e = *t_in;
+    let mut o = [[1.0f32; 8]; 32];
+
+    let mut half = 1usize;
+    while half < 32 {
+        let mut base = 0;
+        while base < 32 {
+            for i in 0..half {
+                let i0 = base + i;
+                let i1 = base + half + i;
+                for k in 0..8 {
+                    let e0 = e[i0][k];
+                    let o0 = o[i0][k];
+                    let e1 = e[i1][k];
+                    let o1 = o[i1][k];
+                    e[i0][k] = e0 * e1;
+                    o[i0][k] = o0 * o1;
+                    e[i1][k] = e0 * o1;
+                    o[i1][k] = o0 * e1;
+                }
+            }
+            base += 2 * half;
+        }
+        half *= 2;
+    }
+
+    let mut s0 = [0.0f32; 8];
+    let mut w = [[0.0f32; 8]; 32];
+    for a in 0..32 {
+        for k in 0..8 {
+            s0[k] += o[a][k] + e[a][k];
+            w[a][k] = o[a][k] - e[a][k];
+        }
+    }
+
+    let mut half = 1usize;
+    while half < 32 {
+        let mut base = 0;
+        while base < 32 {
+            for i in 0..half {
+                let i0 = base + i;
+                let i1 = base + half + i;
+                for k in 0..8 {
+                    let u = w[i0][k];
+                    let v = w[i1][k];
+                    w[i0][k] = u + v;
+                    w[i1][k] = u - v;
+                }
+            }
+            base += 2 * half;
+        }
+        half *= 2;
+    }
+
+    for x in 0..32 {
+        for k in 0..8 {
+            let num = s0[k] - w[x][k];
+            let den = t_in[x][k] * (s0[k] + w[x][k]);
+            let v = if den.abs() > 1e-12 { num / den } else { 0.0 };
+            t_ext[x][k] = v.clamp(-0.99995, 0.99995);
+        }
+    }
+}
+
+/// Zero-4-cycle permutation connecting `nb = n/16` RM(2,4) A-checks and `nb = n/16` RM(2,4) B-checks.
 fn make_girth6_perm_16(n: usize) -> Vec<usize> {
     let mut rng = XorShift64(0x61D9_C0DE_1234_5678u64 ^ ((n as u64) << 16));
     let nb = n / 16;
@@ -203,9 +297,60 @@ fn make_girth6_perm_16(n: usize) -> Vec<usize> {
     perm
 }
 
+/// Zero-4-cycle permutation connecting `na = n/16` RM(2,4) A-checks and `nb = n/32` RM(3,5) B-checks.
+fn make_girth6_perm_16_32(n: usize) -> Vec<usize> {
+    let mut rng = XorShift64(0x5050_61D9_1234_5678u64 ^ ((n as u64) << 16));
+    let na = n / 16;
+    let nb = n / 32;
+    let a_slots: Vec<Vec<usize>> = (0..na)
+        .map(|a| {
+            let mut v: Vec<usize> = (0..16).map(|i| a * 16 + i).collect();
+            for i in (1..16).rev() {
+                let j = (rng.next() as usize) % (i + 1);
+                v.swap(i, j);
+            }
+            v
+        })
+        .collect();
+    let mut a_next = vec![0usize; na];
+
+    let mut evens: Vec<usize> = (0..na).step_by(2).collect();
+    let mut odds: Vec<usize> = (1..na).step_by(2).collect();
+    for i in (1..evens.len()).rev() {
+        let j = (rng.next() as usize) % (i + 1);
+        evens.swap(i, j);
+    }
+    for i in (1..odds.len()).rev() {
+        let j = (rng.next() as usize) % (i + 1);
+        odds.swap(i, j);
+    }
+    evens.truncate(16);
+    odds.truncate(16);
+    let mut shifts = Vec::with_capacity(32);
+    shifts.extend_from_slice(&evens);
+    shifts.extend_from_slice(&odds);
+    for i in (1..32).rev() {
+        let j = (rng.next() as usize) % (i + 1);
+        shifts.swap(i, j);
+    }
+
+    let mut perm = vec![0usize; n];
+    for b in 0..nb {
+        for (pos, &sh) in shifts.iter().enumerate() {
+            let a = (2 * b + sh) % na;
+            perm[b * 32 + pos] = a_slots[a][a_next[a]];
+            a_next[a] += 1;
+        }
+    }
+    perm
+}
+
+/// Build the combined parity-check matrix `H` and reduce it to RREF over GF(2) to obtain
+/// systematic `(info_cols, parity_cols, parity_masks)`.
 fn build_systematic_encoder(
     n: usize,
     perm: &[usize],
+    rate: GldpcRate,
 ) -> (Vec<usize>, Vec<usize>, Vec<Vec<u64>>) {
     let words = n.div_ceil(64);
     let mut rows: Vec<Vec<u64>> = Vec::new();
@@ -223,17 +368,44 @@ fn build_systematic_encoder(
             rows.push(row);
         }
     }
-    for b in 0..(n / 16) {
-        let base = b * 16;
-        for &m in &masks16 {
-            let mut row = vec![0u64; words];
-            for i in 0..16 {
-                if (m >> i) & 1 != 0 {
-                    let idx = perm[base + i];
-                    row[idx / 64] |= 1u64 << (idx % 64);
+    match rate {
+        GldpcRate::Rate3_8 => {
+            for b in 0..(n / 16) {
+                let base = b * 16;
+                for &m in &masks16 {
+                    let mut row = vec![0u64; words];
+                    for i in 0..16 {
+                        if (m >> i) & 1 != 0 {
+                            let idx = perm[base + i];
+                            row[idx / 64] |= 1u64 << (idx % 64);
+                        }
+                    }
+                    rows.push(row);
                 }
             }
-            rows.push(row);
+        }
+        GldpcRate::Rate1_2 => {
+            let masks32 = [
+                0xFFFF_FFFFu32,
+                0xAAAA_AAAA,
+                0xCCCC_CCCC,
+                0xF0F0_F0F0,
+                0xFF00_FF00,
+                0xFFFF_0000,
+            ];
+            for b in 0..(n / 32) {
+                let base = b * 32;
+                for &m in &masks32 {
+                    let mut row = vec![0u64; words];
+                    for i in 0..32 {
+                        if (m >> i) & 1 != 0 {
+                            let idx = perm[base + i];
+                            row[idx / 64] |= 1u64 << (idx % 64);
+                        }
+                    }
+                    rows.push(row);
+                }
+            }
         }
     }
 
@@ -277,15 +449,25 @@ fn build_systematic_encoder(
 }
 
 impl HypercubeGldpc {
+    /// Construct a Hypercube GLDPC code of length `n` and rate family `rate`.
+    ///
+    /// - `Rate3_8` requires `n >= 256` and `n % 128 == 0` (e.g. `512`, `1024`).
+    /// - `Rate1_2` requires `n >= 512` and `n % 256 == 0` (e.g. `512`, `1024`).
     pub fn new(n: usize, rate: GldpcRate) -> Result<Self, Error> {
-        let ok = (256..=65536).contains(&n) && n % 128 == 0;
+        let ok = match rate {
+            GldpcRate::Rate3_8 => n >= 256 && n % 128 == 0,
+            GldpcRate::Rate1_2 => n >= 512 && n % 256 == 0,
+        };
         if !ok {
             return Err(Error::Unsupported(
                 "invalid HypercubeGldpc block length for selected rate",
             ));
         }
-        let perm = make_girth6_perm_16(n);
-        let (info_cols, parity_cols, parity_masks) = build_systematic_encoder(n, &perm);
+        let perm = match rate {
+            GldpcRate::Rate3_8 => make_girth6_perm_16(n),
+            GldpcRate::Rate1_2 => make_girth6_perm_16_32(n),
+        };
+        let (info_cols, parity_cols, parity_masks) = build_systematic_encoder(n, &perm, rate);
         let k = info_cols.len();
         Ok(Self {
             n,
@@ -298,22 +480,27 @@ impl HypercubeGldpc {
         })
     }
 
+    /// Codeword length `n`.
     pub fn codeword_len(&self) -> usize {
         self.n
     }
 
+    /// Exact message length `k = n - rank(H)`.
     pub fn message_len(&self) -> usize {
         self.k
     }
 
+    /// Rate family (`Rate3_8` or `Rate1_2`).
     pub fn rate(&self) -> GldpcRate {
         self.rate
     }
 
+    /// Allocate a reusable scratch buffer for zero-allocation decoding.
     pub fn scratch(&self) -> GldpcScratch {
         GldpcScratch::new(self.n)
     }
 
+    /// Systematically encode a `k`-bit message into an `n`-bit codeword.
     pub fn encode(&self, msg: &[bool]) -> Result<Bits, Error> {
         if msg.len() != self.k {
             return Err(Error::Length {
@@ -340,6 +527,7 @@ impl HypercubeGldpc {
         Ok(cw)
     }
 
+    /// Extract the `k` systematic message bits from an `n`-bit codeword.
     pub fn extract_message(&self, codeword: &[bool]) -> Result<Bits, Error> {
         if codeword.len() != self.n {
             return Err(Error::Length {
@@ -350,6 +538,7 @@ impl HypercubeGldpc {
         Ok(self.info_cols.iter().map(|&col| codeword[col]).collect())
     }
 
+    /// Check whether all Group-A and Group-B hypercube parity constraints hold.
     pub fn is_valid_codeword(&self, bits: &[bool]) -> bool {
         if bits.len() != self.n {
             return false;
@@ -366,26 +555,49 @@ impl HypercubeGldpc {
                 return false;
             }
         }
-        for b in 0..(self.n / 16) {
-            let base = b * 16;
-            let mut m = 0u32;
-            for i in 0..16 {
-                if bits[self.perm[base + i]] {
-                    m |= 1u32 << i;
+        match self.rate {
+            GldpcRate::Rate3_8 => {
+                for b in 0..(self.n / 16) {
+                    let base = b * 16;
+                    let mut m = 0u32;
+                    for i in 0..16 {
+                        if bits[self.perm[base + i]] {
+                            m |= 1u32 << i;
+                        }
+                    }
+                    if !is_valid_ehamming16(m) {
+                        return false;
+                    }
                 }
             }
-            if !is_valid_ehamming16(m) {
-                return false;
+            GldpcRate::Rate1_2 => {
+                for b in 0..(self.n / 32) {
+                    let base = b * 32;
+                    let mut m = 0u32;
+                    for i in 0..32 {
+                        if bits[self.perm[base + i]] {
+                            m |= 1u32 << i;
+                        }
+                    }
+                    if !is_valid_ehamming32(m) {
+                        return false;
+                    }
+                }
             }
         }
         true
     }
 
+    /// Soft-decision Hartmann-Rudolph FWHT decoding.
+    ///
+    /// Convention (matches [`crate::CubeCode::decode_soft`]):
+    /// `llrs[i] > 0.0` favors bit `1` (`true`), `llrs[i] < 0.0` favors bit `0` (`false`).
     pub fn decode_soft(&self, llrs: &[f32], max_iters: usize) -> Result<GldpcDecision, Error> {
         let mut scratch = self.scratch();
         self.decode_soft_with_scratch(llrs, max_iters, &mut scratch)
     }
 
+    /// Soft-decision decoding reusing `scratch` (still allocates the returned `Bits`).
     pub fn decode_soft_with_scratch(
         &self,
         llrs: &[f32],
@@ -403,6 +615,7 @@ impl HypercubeGldpc {
         })
     }
 
+    /// Zero-allocation soft decode into `scratch`. Returns `(half_iters, converged)`.
     pub fn decode_into_scratch(
         &self,
         llrs: &[f32],
@@ -415,30 +628,37 @@ impl HypercubeGldpc {
                 got: llrs.len(),
             });
         }
-        let num_blocks = self.n / 16;
+        debug_assert_eq!(scratch.t_ch.len(), self.n);
         if self.all_syndromes_zero_llr(llrs) {
             for (dst, &l) in scratch.t_tot.iter_mut().zip(llrs) {
                 *dst = -l;
             }
             return Ok((0, true));
         }
+
         for (dst, &l) in scratch.t_ch.iter_mut().zip(llrs) {
             *dst = clamp_t(fast_tanh_f32(-0.5 * l));
         }
         scratch.t_a.fill(0.0);
         scratch.t_b.fill(0.0);
 
-        let mut in_buf = [[0.0f32; 8]; 16];
-        let mut ext_buf = [[0.0f32; 8]; 16];
+        let num_grps_a = self.n / 128;
+        let mut in_a = [[0.0f32; 8]; 16];
+        let mut ext_a = [[0.0f32; 8]; 16];
+        let mut in_b16 = [[0.0f32; 8]; 16];
+        let mut ext_b16 = [[0.0f32; 8]; 16];
+        let mut in_b32 = [[0.0f32; 8]; 32];
+        let mut ext_b32 = [[0.0f32; 8]; 32];
         let mut half_iters = 0usize;
 
         for iter in 0..max_iters {
-            for grp in 0..(num_blocks / 8) {
+            // Half-iter 1: Group A — RM(2, 4) = (16, 11), 8 cubes at a time.
+            for grp in 0..num_grps_a {
                 let gbase = grp * 128;
                 if iter == 0 {
                     for x in 0..16 {
                         for k in 0..8 {
-                            in_buf[x][k] = scratch.t_ch[gbase + k * 16 + x];
+                            in_a[x][k] = scratch.t_ch[gbase + k * 16 + x];
                         }
                     }
                 } else {
@@ -451,27 +671,27 @@ impl HypercubeGldpc {
                             tb[k] = scratch.t_b[idx];
                         }
                         for k in 0..8 {
-                            in_buf[x][k] = clamp_t((tc[k] + tb[k]) / (1.0 + tc[k] * tb[k]));
+                            in_a[x][k] = clamp_t((tc[k] + tb[k]) / (1.0 + tc[k] * tb[k]));
                         }
                     }
                 }
-                hr_map_siso_tanh_16x8(&in_buf, &mut ext_buf);
+                hr_map_siso_tanh_16x8(&in_a, &mut ext_a);
                 if iter == 0 {
                     for x in 0..16 {
                         for k in 0..8 {
                             let idx = gbase + k * 16 + x;
-                            let ta = ext_buf[x][k];
+                            let ta = ext_a[x][k];
                             scratch.t_a[idx] = ta;
-                            scratch.t_tot[idx] = in_buf[x][k] + ta;
+                            scratch.t_tot[idx] = in_a[x][k] + ta;
                         }
                     }
                 } else {
                     for x in 0..16 {
                         for k in 0..8 {
                             let idx = gbase + k * 16 + x;
-                            let ta = 0.75 * ext_buf[x][k] + 0.25 * scratch.t_a[idx];
+                            let ta = 0.75 * ext_a[x][k] + 0.25 * scratch.t_a[idx];
                             scratch.t_a[idx] = ta;
-                            scratch.t_tot[idx] = in_buf[x][k] + ta;
+                            scratch.t_tot[idx] = in_a[x][k] + ta;
                         }
                     }
                 }
@@ -481,37 +701,80 @@ impl HypercubeGldpc {
                 return Ok((half_iters, true));
             }
 
-            for grp in 0..(num_blocks / 8) {
-                let gbase = grp * 128;
-                for x in 0..16 {
-                    let mut tc = [0.0f32; 8];
-                    let mut ta = [0.0f32; 8];
-                    for k in 0..8 {
-                        let p = self.perm[gbase + k * 16 + x];
-                        tc[k] = scratch.t_ch[p];
-                        ta[k] = scratch.t_a[p];
-                    }
-                    for k in 0..8 {
-                        in_buf[x][k] = clamp_t((tc[k] + ta[k]) / (1.0 + tc[k] * ta[k]));
-                    }
-                }
-                hr_map_siso_tanh_16x8(&in_buf, &mut ext_buf);
-                if iter == 0 {
-                    for x in 0..16 {
-                        for k in 0..8 {
-                            let p = self.perm[gbase + k * 16 + x];
-                            let tb = ext_buf[x][k];
-                            scratch.t_b[p] = tb;
-                            scratch.t_tot[p] = in_buf[x][k] + tb;
+            // Half-iter 2: Group B — RM(2, 4) for Rate3_8 or RM(3, 5) for Rate1_2.
+            match self.rate {
+                GldpcRate::Rate3_8 => {
+                    for grp in 0..num_grps_a {
+                        let gbase = grp * 128;
+                        for x in 0..16 {
+                            let mut tc = [0.0f32; 8];
+                            let mut ta = [0.0f32; 8];
+                            for k in 0..8 {
+                                let p = self.perm[gbase + k * 16 + x];
+                                tc[k] = scratch.t_ch[p];
+                                ta[k] = scratch.t_a[p];
+                            }
+                            for k in 0..8 {
+                                in_b16[x][k] = clamp_t((tc[k] + ta[k]) / (1.0 + tc[k] * ta[k]));
+                            }
+                        }
+                        hr_map_siso_tanh_16x8(&in_b16, &mut ext_b16);
+                        if iter == 0 {
+                            for x in 0..16 {
+                                for k in 0..8 {
+                                    let p = self.perm[gbase + k * 16 + x];
+                                    let tb = ext_b16[x][k];
+                                    scratch.t_b[p] = tb;
+                                    scratch.t_tot[p] = in_b16[x][k] + tb;
+                                }
+                            }
+                        } else {
+                            for x in 0..16 {
+                                for k in 0..8 {
+                                    let p = self.perm[gbase + k * 16 + x];
+                                    let tb = 0.75 * ext_b16[x][k] + 0.25 * scratch.t_b[p];
+                                    scratch.t_b[p] = tb;
+                                    scratch.t_tot[p] = in_b16[x][k] + tb;
+                                }
+                            }
                         }
                     }
-                } else {
-                    for x in 0..16 {
-                        for k in 0..8 {
-                            let p = self.perm[gbase + k * 16 + x];
-                            let tb = 0.75 * ext_buf[x][k] + 0.25 * scratch.t_b[p];
-                            scratch.t_b[p] = tb;
-                            scratch.t_tot[p] = in_buf[x][k] + tb;
+                }
+                GldpcRate::Rate1_2 => {
+                    let num_grps_b = self.n / 256;
+                    for grp in 0..num_grps_b {
+                        let gbase = grp * 256;
+                        for x in 0..32 {
+                            let mut tc = [0.0f32; 8];
+                            let mut ta = [0.0f32; 8];
+                            for k in 0..8 {
+                                let p = self.perm[gbase + k * 32 + x];
+                                tc[k] = scratch.t_ch[p];
+                                ta[k] = scratch.t_a[p];
+                            }
+                            for k in 0..8 {
+                                in_b32[x][k] = clamp_t((tc[k] + ta[k]) / (1.0 + tc[k] * ta[k]));
+                            }
+                        }
+                        hr_map_siso_tanh_32x8(&in_b32, &mut ext_b32);
+                        if iter == 0 {
+                            for x in 0..32 {
+                                for k in 0..8 {
+                                    let p = self.perm[gbase + k * 32 + x];
+                                    let tb = ext_b32[x][k];
+                                    scratch.t_b[p] = tb;
+                                    scratch.t_tot[p] = in_b32[x][k] + tb;
+                                }
+                            }
+                        } else {
+                            for x in 0..32 {
+                                for k in 0..8 {
+                                    let p = self.perm[gbase + k * 32 + x];
+                                    let tb = 0.75 * ext_b32[x][k] + 0.25 * scratch.t_b[p];
+                                    scratch.t_b[p] = tb;
+                                    scratch.t_tot[p] = in_b32[x][k] + tb;
+                                }
+                            }
                         }
                     }
                 }
@@ -536,14 +799,30 @@ impl HypercubeGldpc {
                 return false;
             }
         }
-        for b in 0..(self.n / 16) {
-            let base = b * 16;
-            let mut bits = 0u32;
-            for i in 0..16 {
-                bits |= (((-ch[self.perm[base + i]]).to_bits()) >> 31) << i;
+        match self.rate {
+            GldpcRate::Rate3_8 => {
+                for b in 0..(self.n / 16) {
+                    let base = b * 16;
+                    let mut bits = 0u32;
+                    for i in 0..16 {
+                        bits |= (((-ch[self.perm[base + i]]).to_bits()) >> 31) << i;
+                    }
+                    if !is_valid_ehamming16(bits) {
+                        return false;
+                    }
+                }
             }
-            if !is_valid_ehamming16(bits) {
-                return false;
+            GldpcRate::Rate1_2 => {
+                for b in 0..(self.n / 32) {
+                    let base = b * 32;
+                    let mut bits = 0u32;
+                    for i in 0..32 {
+                        bits |= (((-ch[self.perm[base + i]]).to_bits()) >> 31) << i;
+                    }
+                    if !is_valid_ehamming32(bits) {
+                        return false;
+                    }
+                }
             }
         }
         true
@@ -561,14 +840,30 @@ impl HypercubeGldpc {
                 return false;
             }
         }
-        for b in 0..(self.n / 16) {
-            let base = b * 16;
-            let mut bits = 0u32;
-            for i in 0..16 {
-                bits |= (t_tot[self.perm[base + i]].to_bits() >> 31) << i;
+        match self.rate {
+            GldpcRate::Rate3_8 => {
+                for b in 0..(self.n / 16) {
+                    let base = b * 16;
+                    let mut bits = 0u32;
+                    for i in 0..16 {
+                        bits |= (t_tot[self.perm[base + i]].to_bits() >> 31) << i;
+                    }
+                    if !is_valid_ehamming16(bits) {
+                        return false;
+                    }
+                }
             }
-            if !is_valid_ehamming16(bits) {
-                return false;
+            GldpcRate::Rate1_2 => {
+                for b in 0..(self.n / 32) {
+                    let base = b * 32;
+                    let mut bits = 0u32;
+                    for i in 0..32 {
+                        bits |= (t_tot[self.perm[base + i]].to_bits() >> 31) << i;
+                    }
+                    if !is_valid_ehamming32(bits) {
+                        return false;
+                    }
+                }
             }
         }
         true
@@ -583,12 +878,19 @@ mod tests {
     fn exact_dimensions() {
         assert_eq!(HypercubeGldpc::new(512, GldpcRate::Rate3_8).unwrap().message_len(), 193);
         assert_eq!(HypercubeGldpc::new(1024, GldpcRate::Rate3_8).unwrap().message_len(), 385);
+        assert_eq!(HypercubeGldpc::new(512, GldpcRate::Rate1_2).unwrap().message_len(), 257);
+        assert_eq!(HypercubeGldpc::new(1024, GldpcRate::Rate1_2).unwrap().message_len(), 513);
     }
 
     #[test]
     fn systematic_encode_and_noisy_decode_round_trip() {
         let mut rng = XorShift64(0xCAFE_BABE_1234_5678);
-        for &(n, rate) in &[(512, GldpcRate::Rate3_8), (1024, GldpcRate::Rate3_8)] {
+        for &(n, rate) in &[
+            (512, GldpcRate::Rate3_8),
+            (1024, GldpcRate::Rate3_8),
+            (512, GldpcRate::Rate1_2),
+            (1024, GldpcRate::Rate1_2),
+        ] {
             let code = HypercubeGldpc::new(n, rate).unwrap();
             let msg: Bits = (0..code.message_len()).map(|_| (rng.next() & 1) != 0).collect();
             let cw = code.encode(&msg).unwrap();
