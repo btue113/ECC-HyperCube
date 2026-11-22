@@ -101,8 +101,8 @@ fn main() {
     let c512_r38 = HypercubeGldpc::new(512, GldpcRate::Rate3_8).unwrap();
     let c1024_r38 = HypercubeGldpc::new(1024, GldpcRate::Rate3_8).unwrap();
 
-    bench_point(&c512_r38, 2.5, 12, 200_000, 100, threads);
-    bench_point(&c512_r38, 3.0, 12, 200_000, 100, threads);
-    bench_point(&c1024_r38, 2.5, 12, 200_000, 100, threads);
-    bench_point(&c1024_r38, 3.0, 12, 300_000, 100, threads);
+    bench_point(&c512_r38, 2.5, 24, 200_000, 100, threads);
+    bench_point(&c512_r38, 3.0, 24, 200_000, 100, threads);
+    bench_point(&c1024_r38, 2.5, 24, 200_000, 100, threads);
+    bench_point(&c1024_r38, 3.0, 24, 300_000, 100, threads);
 }

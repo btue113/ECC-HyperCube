@@ -557,7 +557,7 @@ mod tests {
             for i in (0..n).step_by(47) {
                 llrs[i] = -llrs[i] * 0.4;
             }
-            let dec = code.decode_soft(&llrs, 12).unwrap();
+            let dec = code.decode_soft(&llrs, 24).unwrap();
             assert!(dec.converged);
             assert_eq!(dec.codeword, cw);
             assert_eq!(dec.message, msg);
