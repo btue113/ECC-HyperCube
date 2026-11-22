@@ -430,7 +430,7 @@ impl HypercubeGldpc {
         let mut ext_buf = [[0.0f32; 8]; 16];
         let mut half_iters = 0usize;
 
-        for _iter in 0..max_iters {
+        for iter in 0..max_iters {
             for grp in 0..(num_blocks / 8) {
                 for k in 0..8 {
                     let base = (grp * 8 + k) * 16;
@@ -444,7 +444,11 @@ impl HypercubeGldpc {
                 for k in 0..8 {
                     let base = (grp * 8 + k) * 16;
                     for x in 0..16 {
-                        let ta = ext_buf[x][k];
+                        let ta = if iter == 0 {
+                            ext_buf[x][k]
+                        } else {
+                            0.75 * ext_buf[x][k] + 0.25 * scratch.t_a[base + x]
+                        };
                         scratch.t_a[base + x] = ta;
                         scratch.t_tot[base + x] = in_buf[x][k] + ta;
                     }
@@ -470,7 +474,11 @@ impl HypercubeGldpc {
                     let base = (grp * 8 + k) * 16;
                     for x in 0..16 {
                         let p = self.perm[base + x];
-                        let tb = ext_buf[x][k];
+                        let tb = if iter == 0 {
+                            ext_buf[x][k]
+                        } else {
+                            0.75 * ext_buf[x][k] + 0.25 * scratch.t_b[p]
+                        };
                         scratch.t_b[p] = tb;
                         scratch.t_tot[p] = in_buf[x][k] + tb;
                     }
