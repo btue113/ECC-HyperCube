@@ -1,0 +1,29 @@
+{
+  "upload_type": "software",
+  "title": "ecc-hypercube: Reed–Muller and Hypercube GLDPC codes on the hypercube",
+  "description": "<p>Dependency-free Rust encoding and decoding of Reed–Muller codes on the hypercube: the 2013 hypercube majority-logic decoder (Reed's 1954 algorithm) with bit-packed voting, recursive soft-decision list decoding, and automorphism-ensemble decoding with maximum-likelihood certificates for early stopping, and generalized LDPC codes built from extended-Hamming hypercube checks with exact Hartmann–Rudolph component decoding.</p><p>Dual-licensed under MIT OR Apache-2.0; both license texts are included in the archive.</p>",
+  "creators": [
+    {
+      "name": "Bui, Tue"
+    }
+  ],
+  "license": "MIT",
+  "keywords": [
+    "error-correcting codes",
+    "Reed–Muller codes",
+    "hypercube",
+    "majority-logic decoding",
+    "successive cancellation list decoding",
+    "automorphism ensemble decoding",
+    "maximum-likelihood certificate",
+    "generalized LDPC codes",
+    "Rust"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/bomot113/ECC-HyperCube",
+      "relation": "isDerivedFrom",
+      "resource_type": "software"
+    }
+  ]
+}
