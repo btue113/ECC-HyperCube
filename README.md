@@ -12,6 +12,22 @@ Most open-source ECC libraries sit at two extremes: small hard-decision crates (
 - **Built-in error detection (GLDPC):** 0 undetected errors across ~30M decoded words and 0 false alarms in 4M noise-only trials (`< 1.5e-6` measured; `10⁸`-trial blind-decoding test pending).
 - **Geometry over heavy algebra:** parity checks are subcubes, the 2013 voter polls parallel subcubes, and the ensemble relabels the cube's corners (see the [blog series](#history)).
 
+### Learn coding theory on one shape
+
+This project started in 2013 when visualizing Hamming `(7, 4)` on a 3D cube and generalizing it to higher dimensions independently led back to Reed–Muller codes (1954). Starting from the **hypercube** instead of finite fields or generator matrices is what made every later step click: halving a cube *is* the Plotkin/Polar butterfly, tilting a cube *is* an affine automorphism (`GA(m, 2)`), the smallest subcube *is* the minimum distance behind the ML proof, and slicing `n` vertices into small 4- and 5-cubes two different ways *is* Hypercube GLDPC.
+
+Every stage stays in the crate (including the bit-for-bit 2013 decoder) so you can trace 70 years of coding theory on **one geometric object**:
+
+| Stage | Idea on the hypercube | Where to read it |
+| :--- | :--- | :--- |
+| **1. Encoding & parity (1954)** | Bits sit on cube corners; every parity check is a subcube whose corners XOR to 0 (one 12-line `superset_xor` butterfly) | [`src/hypercube.rs`](src/hypercube.rs), [`src/cube_code.rs`](src/cube_code.rs) |
+| **2. Hard voting (1954 / 2013)** | Majority vote across parallel subcubes, kept bit-for-bit identical to the original 2013 C++ decoder | `CubeCode::decode` |
+| **3. Soft list decoding (2006)** | Run the same cube-halving butterfly on soft confidences (LLRs), with an `RM(1, d)` FWHT base case | [`src/list_decoder.rs`](src/list_decoder.rs) |
+| **4. Ensemble + ML proof (1991 / 2021)** | Tilt and relabel the cube's corners (`GA(m, 2)`) to decode from multiple angles; the smallest subcube (`d_min`) certifies ML | `CubeCode::decode_soft_ensemble_checked` |
+| **5. Hypercube GLDPC (1976 / 1981)** | Scale to `n = 512–2048` by slicing the vertices into small 4- and 5-cubes two different ways and passing FWHT APPs between cuts | [`src/gldpc.rs`](src/gldpc.rs) |
+
+The visual walkthroughs live in the [5-part blog series](#history) (Parts 1–2 published, Parts 3–5 coming).
+
 ## Results vs. 5G-construction polar codes in AFF3CT
 
 ### Quick guide: which decoder to pick
