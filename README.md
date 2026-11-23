@@ -7,7 +7,7 @@ from a 2013 majority-vote decoder to soft decoders that keep pace with 5G-constr
 
 Most open-source ECC libraries sit at two extremes: small hard-decision crates (Reed–Solomon, Hamming, CRC) or heavy C++/Python research frameworks (AFF3CT, Sionna). `ecc-hypercube` sits in between — a **zero-dependency, `#![forbid(unsafe_code)]` Rust crate** for short- and medium-block soft-decision decoding, built only on long-published hypercube techniques (a patent screen found no blocking claims; see [Prior art](#prior-art)).
 
-- **Two complementary hypercube decoders (`n = 128..2048`):** RM automorphism ensemble (`ReedMuller`) for best WER at `n ≤ 512`, and Hypercube GLDPC (`HypercubeGldpc`) for fast decoding + built-in error detection at `n ≥ 512`.
+- **Two complementary hypercube decoders (`n = 128..2048`):** RM automorphism ensemble (`ReedMuller`) for best WER at `n ≤ 512`, and Hypercube **GLDPC** (*Generalized Low-Density Parity-Check*, replacing single parity checks with extended-Hamming hypercube checks; `HypercubeGldpc`) for fast decoding + built-in error detection at `n ≥ 512`.
 - **Provable ML certificates (RM):** `decode_soft_ensemble_checked` proves when no codeword is closer to the received word, letting the ensemble stop early.
 - **Built-in error detection (GLDPC):** 0 undetected errors across ~30M decoded words and 0 false alarms in 4M noise-only trials (`< 1.5e-6` measured; `10⁸`-trial blind-decoding test pending).
 - **Geometry over heavy algebra:** parity checks are subcubes, the 2013 voter polls parallel subcubes, and the ensemble relabels the cube's corners (see the [blog series](#history)).
