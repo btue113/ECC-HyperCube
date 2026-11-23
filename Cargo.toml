@@ -3,7 +3,7 @@ name = "ecc-hypercube"
 version = "0.5.0"
 edition = "2021"
 authors = ["Tue Bui <bomot113@gmail.com>"]
-description = "Fast encoding and decoding of Reed-Muller error correcting codes based on hypercubes"
+description = "Reed-Muller and generalized LDPC error-correcting codes on the hypercube: majority-logic, soft list and automorphism-ensemble decoding, and GLDPC with exact component APP"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/btue113/ECC-HyperCube"
 # Not published: the 5G / CRC / PAC comparison benchmark (a research baseline) and the
