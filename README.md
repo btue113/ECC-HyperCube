@@ -1,80 +1,109 @@
 # ECC-HyperCube
 
-Reed–Muller error-correcting codes decoded on the Boolean hypercube, in dependency-free Rust:
-from a 2013 majority-vote decoder to soft decoding that keeps pace with the 5G NR polar codes.
+Reed–Muller and Hypercube GLDPC error-correcting codes on the Boolean hypercube, in dependency-free Rust:
+from a 2013 majority-vote decoder to soft decoders that keep pace with 5G-construction polar codes.
 
 ## Why it matters
 
-Most open-source error-correction libraries sit at two extremes: small crates for classical
-hard-decision codes (Reed–Solomon, Hamming, CRC, basic Viterbi), or large C++/Python research
-frameworks (AFF3CT, Sionna) with heavy dependencies. `ecc-hypercube` sits in between: a
-dependency-free Rust crate for **short-block soft-decision decoding**, built entirely on
-long-published Reed–Muller techniques.
+Most open-source ECC libraries sit at two extremes: small hard-decision crates (Reed–Solomon, Hamming, CRC) or heavy C++/Python research frameworks (AFF3CT, Sionna). `ecc-hypercube` sits in between — a **zero-dependency, `#![forbid(unsafe_code)]` Rust crate** for short- and medium-block soft-decision decoding, built only on long-published hypercube techniques (a patent screen found no blocking claims; see [Prior art](#prior-art)).
 
-- **On par with 5G at short blocks.** In the two codes measured so far: at (128,64) the
-  ensemble decoder matches the word error rate of 5G NR polar codes with CRC-aided list decoding
-  (L = 32) in a fifth of the time (18 µs vs. 90 µs). At (256,93) it makes about half as many
-  word errors (about 0.15 dB) in about the same time, though with no CRC it cannot flag its own
-  errors.
-- **It can prove its answer is the best possible.** A maximum-likelihood certificate says when no
-  codeword is closer to what was received. At (128,64) it proves about 97% of words at 3.5 dB, so
-  the decoder stops early, and it shows when a retry with more effort (or a retransmission
-  request) could help.
-- **Geometry instead of heavy algebra.** Textbooks teach these codes through finite fields,
-  Boolean polynomials and Kronecker matrices. Here every idea is a picture on the hypercube:
-  parity checks are subcubes, the 2013 voter polls parallel subcubes, the ensemble relabels the
-  cube's corners (including tilts, not just rotations), and the minimum distance behind the ML
-  proof is the smallest subcube. The [blog series](#history) draws them step by step (Parts 1–2
-  published, Parts 3–5 coming), and the 2013 decoder is kept bit-for-bit so you can trace the
-  path from a hand-drawn cube to a modern soft decoder.
-- **One butterfly, ~1,500 lines.** A 12-line `superset_xor` sweep does encoding, the hard
-  voter's cancellation and the clean-word check; list and ensemble decoding run the same halving
-  pattern on soft values. All in readable, dependency-free Rust.
-- **Long-published techniques, zero dependencies.** Everything in the crate is published
-  Reed–Muller and list-decoding theory (see [Prior art](#prior-art)); patented constructions such
-  as PAC and CRC-aided polar variants are kept out. Pure Rust with no external crates, licensed
-  MIT OR Apache-2.0.
+- **Two complementary hypercube decoders (`n = 128..2048`):** RM automorphism ensemble (`ReedMuller`) for best WER at `n ≤ 512`, and Hypercube GLDPC (`HypercubeGldpc`) for fast decoding + built-in error detection at `n ≥ 512`.
+- **Provable ML certificates (RM):** `decode_soft_ensemble_checked` proves when no codeword is closer to the received word, letting the ensemble stop early.
+- **Built-in error detection (GLDPC):** 0 undetected errors across ~30M decoded words and 0 false alarms in 4M noise-only trials (`< 1.5e-6` measured; `10⁸`-trial blind-decoding test pending).
+- **Geometry over heavy algebra:** parity checks are subcubes, the 2013 voter polls parallel subcubes, and the ensemble relabels the cube's corners (see the [blog series](#history)).
 
-## Results vs. 5G NR polar codes
+## Results vs. 5G-construction polar codes in AFF3CT
 
-`benches/polar_5g.rs` compares the RM decoders with the 5G NR polar code (3GPP TS 38.212,
-CRC-11, CRC-aided SCL with L = 32) at the same block length and payload, on AWGN with BPSK.
-Word error rate (WER) and average time per word:
+### Quick guide: which decoder to pick
 
-| Code | Decoder | WER | µs |
-| --- | --- | --- | --- |
-| (128,64) at 3.5 dB | 2013 hard decoder (`decode`) | 0.56 | |
-| | SCL, L = 8 (`decode_soft_list`) | 8.1e-4 | 29 |
-| | SCL, L = 32 | 1.2e-4 | 84 |
-| | ensemble, 8 copies × L = 4 (`decode_soft_ensemble`) | **1.0e-4** | **18** |
-| | 5G NR + CRC-11, L = 32 | 1.5e-4 | 90 |
-| (256,93) at 2.5 dB | ensemble, 32 copies × L = 8 | **1.1e-4** (15 errors) | 168 |
-| | 5G NR + CRC-11, L = 32 | 2.2e-4 (30 errors) | 171 |
+| Block length | Use | WER vs. `SCL8` | Speed vs. software `SCL8` | Error detection |
+| :--- | :--- | :--- | :--- | :--- |
+| **`n ≤ 256`** | **RM Ensemble** (`8×4` / `32×8`) | **−0.16 to −0.59 dB** (`8×4`) / **−0.49 to −0.61 dB** (`32×8`) vs. `CRC-11` | `1–1.4×` (`8×4`) / `2.5–3.5×` slower (`32×8`) | None |
+| **`n = 512`** | **RM Ensemble** *(best WER)* | **−0.31 to −0.32 dB** vs. `CRC-11` (`−0.14` to `−0.15` vs. `ASCL128`) | `7–25×` slower | None |
+| **`n = 512`** | **Hypercube GLDPC** *(speed/detection)* | **−0.03 to −0.13 dB** vs. `CRC-24`; `+0.15` to `+0.27 dB` vs. `CRC-11` | **4–5× faster** | Built-in |
+| **`n ≥ 1024`** | **Hypercube GLDPC** | `+0.03` to `+0.12 dB` vs. `CRC-11` | **2.6–3.4× faster** (`10–15×` vs. `SCL32`) | Built-in |
 
-Eb/N0 needed for WER 1e-4, against the normal-approximation limit for each code:
+### Head-to-head at WER = 10⁻⁴
 
-| Code | Limit | RM ensemble | 5G NR + CRC-11, L = 32 |
-| --- | --- | --- | --- |
-| (128,64) | 2.92 dB | 3.53 dB (8 × 4) | ~3.58 dB |
-| (256,93) | 2.04 dB | ~2.50 dB (32 × 8) | ~2.65 dB |
+*BPSK/AWGN, random codewords, `Eb/N0` on payload rate `k/n`, 8 threads on an Apple M3 Pro (mixed P/E cores). Polar baselines: [AFF3CT](https://aff3ct.github.io/) v3.0.2 (`--enc-fb-gen-method 5G`, `--sim-stats` `decode_siho` pure decode only; CRC-24 appended, not distributed). Negative dB = `ecc-hypercube` better. Each point has about 100 word errors, so dB values are good to about ±0.05. `†` = extrapolated `0.2–0.3 dB`.*
 
-Soft decoding gains roughly 3 dB over the 2013 hard decoder. At (256,93) the ensemble is what
-closes the gap to 5G: plain SCL with L = 32 loses by about 100× (2.0e-3 vs. 2.2e-5 at 3 dB).
+#### RM Automorphism Ensemble
 
-Caveats:
+| Code | Setting | `Eb/N0` | vs. `SCL8` (`CRC-11`) | Pure decode | vs. software `SCL8` |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| `(128, 64)` | `8×4` | **3.50 dB** | **−0.59 dB** | 11 µs | `1.0×` (`11.5 µs`) |
+| `(256, 93)` | `32×8` | **2.49 dB** | **−0.61 dB** | 68 µs | `3.5×` slower (`19.4 µs`) |
+| `(256, 163)` | `32×8` | **3.32 dB** | **−0.49 dB** | 55 µs | `2.7×` slower (`20.7 µs`) |
+| `(512, 256)` | `32×8` | **2.48 dB** | **−0.31 dB** | 930 µs | `25×` slower (`37.2 µs`) |
+| `(1024, 386)` | `32×8` | 2.71 dB | `+0.59 dB` | ≈2,500 µs | `40×` slower (`63 µs`) |
 
-- Measured on 2026-11-14/15 with 8 decodes running in parallel, so the times compare with each
-  other, not with single-core latency.
-- The 5G code is this repository's own implementation. It has not yet been cross-checked against
-  a reference library such as AFF3CT or Sionna.
-- At (256,93) the ensemble searches up to 256 paths against 5G's 32. It also has no CRC, so
-  unlike 5G it cannot flag its own errors. The ML certificate says "no codeword is closer", not
-  "correct".
-- Only these two codes were measured. RM sizes are fixed (n = 2^m, k a sum of binomials), with
-  no puncturing or shortening.
+#### Hypercube GLDPC (`RM(2, 4)` / `RM(3, 5)`, exact component APP via Hartmann–Rudolph FWHT, `f32`, 50 iters)
 
-Reproduce the RM rows with `BENCH_MODE=ae cargo bench --bench polar_5g` and the 5G rows with
-`BENCH_MODE=5g`. Add `SECS_PER_ROW=60` or more to collect enough errors at WER 1e-4.
+| Code | `Eb/N0` | vs. `SCL8` (`CRC-24`) | vs. `SCL8` (`CRC-11`) | Pure decode | vs. software `SCL8` |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| `(256, 97)` | **3.49 dB** | **−0.23 dB†** | — | **2.8 µs** | **7.3× faster** (`20.4 µs`) |
+| `(512, 193)` | **2.79 dB** | **−0.03 dB** | `+0.27 dB` | **8.9 µs** | **4.2× faster** (`37 µs`) |
+| `(512, 257)` | **2.95 dB** | **−0.13 dB** | `+0.15 dB` | **7.1 µs** | **5.2× faster** (`37 µs`) |
+| `(1024, 385)` | **2.28 dB** | — | `+0.12 dB` | **24 µs** | **2.6× faster** (`62 µs`) |
+| `(1024, 513)` | **2.46 dB** | — | `+0.03 dB` | **20 µs** | **3.4× faster** (`68 µs`) |
+
+- **`n = 2048` (outside 5G tables; AFF3CT uses per-SNR Gaussian approximation):** GLDPC `(2048, 1025)` hits WER `10⁻⁴` at **2.09 dB** (`52 µs`) — within **0.05 dB** of `ASCL128` (`2.04 dB`, `9.6 µs`, `5.4×` faster) and **11× faster** than `SCL32` (`1.99 dB`, `597 µs`).
+- **Worst-case latency (GLDPC):** all 50 iterations average **0.33 ms** at `n = 1024` (~3–4× below `ASCL128`'s full `L = 128` fallback, estimated by scaling `SCL32` to `1.1–1.2 ms`).
+- **Where AFF3CT still wins:** `ASCL128` finishes most frames in a cheap first pass, making its *average* pure decode **3–7× faster** than GLDPC (`1.0–4.1 µs` at `n ≤ 1024`) and **0.05–0.60 dB** better on WER (`10⁻⁴`). AFF3CT's software `SCL8` is not its fastest path and hardware `SCL8` is far faster. The RM ensemble has no built-in error detection and a long worst-case tail when uncertified.
+
+### Reproduce
+
+`examples/wer.rs` is a short, std-only Monte-Carlo loop over the public API: random message,
+`encode`, BPSK/AWGN, decode, compare. It prints WER and the decode call's time per word per thread.
+Each table value is the Eb/N0 where log WER crosses `1e-4`, interpolated between bracketing points.
+
+**1. ecc-hypercube**
+
+```sh
+git clone https://github.com/btue113/ECC-HyperCube && cd ECC-HyperCube
+cargo build --release --example wer
+W=target/release/examples/wer
+
+# RM ensemble: rm <r> <m> <copies> <L> <Eb/N0 list>
+$W rm 3 7  8 4 3.0,3.5,4.0          # (128,64)
+$W rm 3 8 32 8 2.0,2.5,3.0          # (256,93)
+$W rm 4 8 32 8 3.0,3.5              # (256,163)
+$W rm 4 9 32 8 2.25,2.5,2.75        # (512,256)
+$W rm 4 10 32 8 2.5,2.75            # (1024,386), slow
+
+# GLDPC: gldpc <n> <3/8|1/2> <Eb/N0 list>
+$W gldpc 256 3/8 3.25,3.5,3.75      # (256,97)
+$W gldpc 512 3/8 2.5,2.75,3.0       # (512,193)
+$W gldpc 512 1/2 2.75,3.0           # (512,257)
+$W gldpc 1024 3/8 2.125,2.25,2.375  # (1024,385)
+$W gldpc 1024 1/2 2.25,2.375,2.5    # (1024,513)
+$W gldpc 2048 1/2 2.0,2.125         # (2048,1025)
+
+# GLDPC false alarms: decode pure noise and count claimed codewords
+$W gldpc-noise 512 3/8 1000000
+```
+
+**2. AFF3CT v3.0.2**
+
+```sh
+git clone --recursive --branch v3.0.2 https://github.com/aff3ct/aff3ct && cd aff3ct
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-funroll-loops -mcpu=native"  # x86: -march=native
+make -j
+```
+
+Run each polar code with the same payload `k` as the row it compares against, plus the CRC
+(`-K` = `k + 11` for `11-5G`, `k + 24` for `24-5GC`). For example, against GLDPC `(1024, 513)`:
+
+```sh
+./bin/aff3ct -C POLAR -N 1024 -K 524 --enc-fb-gen-method 5G --crc-type 11-5G \
+  -D SCL -L 8 -m 2.25 -M 2.5 -s 0.125 -e 100 -t 8 --sim-stats --ter-freq 0
+```
+
+- Other decoders: `-D SCL -L 32` or `-D ASCL -L 128`.
+- Downlink CRC: `--crc-type 24-5GC` with `-K` = `k + 24`.
+- `n = 2048`: `--enc-fb-gen-method GA` (the 5G tables stop at 1024).
+- WER is the `FER` column. Pure decode time is the average `decode_siho` latency in the `--sim-stats` table.
 
 ## Prior art
 
@@ -87,6 +116,7 @@ classical:
 - **Hard decoder (`decode`):** Irving Reed's 1954 majority-logic decoder over parallel flats (independently rediscovered in the 2013 C++ program via the hypercube picture), accelerated here with a butterfly sweep (`superset_xor`, the standard Boolean/Plotkin transform $F^{\otimes m}$) and 64-bit SWAR popcount voting. It produces bit-for-bit identical results to the 2013 C++ program across 1,134 randomized cross-check jobs ($m = 2\text{--}15$).
 - **Soft list decoder (`decode_soft`, `decode_soft_list`):** Dumer–Shabunov recursive list decoding of Reed–Muller codes (2006) and Tal–Vardy Successive Cancellation List (SCL) decoding (2015), using Balatsoukas-Stimming et al.'s hardware-friendly min-sum LLR path metrics (2015), with the same butterfly pattern as `superset_xor` run on soft values.
 - **Automorphism ensemble (`decode_soft_ensemble`):** Geiselhart et al.'s automorphism-ensemble decoding of Reed–Muller codes (2021). RM codes are unchanged by affine relabellings of the cube, $x \mapsto Ax \oplus b$, so the decoder runs on several relabelled copies and keeps the closest codeword. The first copy is the identity, so it is never worse than plain SCL.
+- **Hypercube GLDPC (`HypercubeGldpc`):** generalized LDPC codes, which replace single parity checks with short component codes on a Tanner graph (Tanner, 1981). Each bit sits in two extended-Hamming components, i.e. small RM(m − 2, m) cubes, as in Lentmaier and Zigangirov's Hamming-component GLDPC codes (1999). Each component is decoded with the exact symbol-by-symbol APP of Hartmann and Rudolph (1976), computed over the dual code RM(1, m) with a fast Walsh–Hadamard transform.
 - **Maximum-likelihood certificate (`decode_soft_checked`, `decode_soft_ensemble_checked`):** the Taipale–Pursley sufficient condition for maximum likelihood (1991), which uses the minimum distance $2^{m-r}$, plus the standard branch-and-bound argument that no pruned list path can beat a codeword costing no more than the cheapest pruned metric. The ensemble stops at the first copy whose answer is certified.
 
 ## How it works
@@ -166,6 +196,25 @@ if decision.certified {
 }
 ```
 
+```rust
+use ecc_hypercube::{GldpcRate, HypercubeGldpc};
+
+// Hypercube GLDPC (1024, 513): two layers of extended-Hamming cube checks
+let code = HypercubeGldpc::new(1024, GldpcRate::Rate1_2)?;
+let msg = vec![true; code.message_len()];
+let codeword = code.encode(&msg)?;
+
+// f32 LLRs, positive favors '1'; decode with up to 50 iterations
+let llrs: Vec<f32> = codeword.iter().map(|&b| if b { 2.0 } else { -2.0 }).collect();
+let decision = code.decode_soft(&llrs, 50)?;
+if decision.converged {
+    // every parity check holds, so decision.message is a valid codeword's message;
+    // when it is false, the decoder has detected its own failure
+}
+```
+
+A `ReedMuller` locks its list decoder while decoding, so give each thread its own instance.
+
 `SoftDecision` reports `message`, `cost` (the sum of `|llr|` where the codeword disagrees
 with the received signs), `runner_up_cost`, `pruned_bound`, `distance_certified` (proved by
 the minimum-distance test alone) and `certified` (proved by either test).
@@ -182,12 +231,14 @@ worse than plain SCL and that every certified decision is truly maximum likeliho
 bit-exact comparison against the C++ tool's recorded output (including received words beyond
 the correction bound).
 
-Run the dependency-free benchmarks with:
+The results tables come from `examples/wer.rs` and AFF3CT (see [Reproduce](#reproduce)).
+The dependency-free benchmarks are timing micro-benchmarks and research baselines:
 
 - `cargo bench --bench codec`: hard-decision latency across code sizes, then hard, SC, SCL-8
   and SCL-32 latency per code.
-- `cargo bench --bench polar_5g`: AWGN block-error-rate comparison of Reed–Muller and 5G NR
-  Polar codes (3GPP TS 38.212) on the same SCL decoder. Its modes are `5g`, `nocrc`, `samecrc`,
+- `cargo bench --bench simd_bench`: single-thread SCL and ensemble decoding time per word.
+- `cargo bench --bench polar_5g`: Reed–Muller against an in-repo 5G NR polar construction
+  (3GPP TS 38.212) on this crate's own SCL decoder. Its modes are `5g`, `nocrc`, `samecrc`,
   `ae` (automorphism ensemble), `cert` (ML certificate), `rmcrc` and `pac`; pick one with
   `BENCH_MODE=<mode>` (default: all).
 
@@ -202,8 +253,7 @@ In 2013, while writing a blog post visualizing Hamming `(7, 4)` on a 3D cube, I 
 
 That 2013 repository is kept exactly as it was, as the dated record of the original work. It is no
 longer maintained (its author lost access to that account), it is licensed GPL-2.0-or-later, and
-its code is the unpolished 2013 version. **Use this repository instead:** it is tested bit-for-bit against the 2013 program's output, adds fast SWAR voting, soft list decoding, automorphism-ensemble decoding and
-maximum-likelihood certificates, and is licensed MIT OR Apache-2.0.
+its code is the unpolished 2013 version. **Use this repository instead:** it is tested bit-for-bit against the 2013 program's output, adds fast SWAR voting, soft list decoding, automorphism-ensemble decoding, maximum-likelihood certificates, and Hypercube GLDPC decoding, and is licensed MIT OR Apache-2.0.
 
 The visual path from the 3-cube to Reed–Muller majority voting, the fast butterfly sweep, soft SCL decoding, and 5G polar codes is told in the 5-part blog series *Hamming codes on the hypercube*:
 - [Part 1: Catching a cheater with a cube (Hamming codes)](https://tuebui.com/intuitive-information/hamming-hypercube/)
