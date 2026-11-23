@@ -1,7 +1,8 @@
 # ECC-HyperCube
 
 Reed–Muller and Hypercube GLDPC error-correcting codes on the Boolean hypercube, in dependency-free Rust:
-from a 2013 majority-vote decoder to soft decoders that keep pace with 5G-construction polar codes.
+from a 2013 majority-vote decoder to soft decoders that keep pace with 5G-construction polar codes —
+built, benchmarked, and cross-checked with AI agents (Gemini and Claude).
 
 ## Why it matters
 
