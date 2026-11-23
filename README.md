@@ -284,6 +284,19 @@ The visual path from the 3-cube to Reed–Muller majority voting, the fast butte
 Ask in [Discussions → Q&A](https://github.com/btue113/ECC-HyperCube/discussions/categories/q-a),
 report bugs in [Issues](https://github.com/btue113/ECC-HyperCube/issues), or email bomot113@gmail.com.
 
+## Citation
+
+If you use `ecc-hypercube` in research or a write-up, you can cite it as:
+
+```bibtex
+@software{bui_ecc_hypercube,
+  author  = {Bui, Tue},
+  title   = {{ECC-HyperCube}: Reed--Muller and Hypercube GLDPC error-correcting codes in safe Rust},
+  url     = {https://github.com/btue113/ECC-HyperCube},
+  year    = {2026}
+}
+```
+
 ## License
 
 Copyright (c) 2013-2026 Tue Bui.
