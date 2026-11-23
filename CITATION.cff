@@ -13,6 +13,7 @@ authors:
   - family-names: Bui
     given-names: Tue
     email: bomot113@gmail.com
+doi: 10.5281/zenodo.24456001
 repository-code: "https://github.com/btue113/ECC-HyperCube"
 url: "https://tuebui.com/intuitive-information/hamming-hypercube/"
 license:

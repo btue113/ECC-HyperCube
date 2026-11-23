@@ -1,5 +1,7 @@
 # ECC-HyperCube
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24456001.svg)](https://doi.org/10.5281/zenodo.24456001)
+
 Reed–Muller and Hypercube GLDPC error-correcting codes on the Boolean hypercube, in dependency-free Rust:
 from a 2013 majority-vote decoder to soft decoders that keep pace with 5G-construction polar codes —
 built, benchmarked, and cross-checked with AI agents (Gemini and Claude).
@@ -294,6 +296,7 @@ If you use `ecc-hypercube` in research or a write-up, you can cite it as:
   author  = {Bui, Tue},
   title   = {{ECC-HyperCube}: Reed--Muller and Hypercube GLDPC error-correcting codes in safe Rust},
   url     = {https://github.com/btue113/ECC-HyperCube},
+  doi     = {10.5281/zenodo.24456001},
   year    = {2026}
 }
 ```
