@@ -1,13 +1,14 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
-title: "ecc-hypercube: Reed–Muller codes on the hypercube"
+title: "ecc-hypercube: Reed–Muller and Hypercube GLDPC codes on the hypercube"
 abstract: >-
   Dependency-free Rust encoding and decoding of Reed–Muller codes on the
   hypercube: the 2013 hypercube majority-logic decoder (Reed's 1954 algorithm)
   with bit-packed voting, recursive soft-decision list decoding, and
   automorphism-ensemble decoding with maximum-likelihood certificates for
-  early stopping.
+  early stopping, and generalized LDPC codes built from extended-Hamming
+  hypercube checks with exact Hartmann–Rudolph component decoding.
 authors:
   - family-names: Bui
     given-names: Tue
@@ -17,8 +18,8 @@ url: "https://tuebui.com/intuitive-information/hamming-hypercube/"
 license:
   - MIT
   - Apache-2.0
-version: 0.4.0
-date-released: 2026-11-17
+version: 0.5.0
+date-released: 2026-11-22
 keywords:
   - error-correcting codes
   - Reed–Muller codes
@@ -27,6 +28,7 @@ keywords:
   - successive cancellation list decoding
   - automorphism ensemble decoding
   - maximum-likelihood certificate
+  - generalized LDPC codes
   - Rust
 references:
   - type: software

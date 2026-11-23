@@ -6,7 +6,7 @@ built, benchmarked, and cross-checked with AI agents (Gemini and Claude).
 
 ## Why it matters
 
-Most open-source ECC libraries sit at two extremes: small hard-decision crates (Reed–Solomon, Hamming, CRC) or heavy C++/Python research frameworks (AFF3CT, Sionna). `ecc-hypercube` sits in between — a **zero-dependency, `#![forbid(unsafe_code)]` Rust crate** for short- and medium-block soft-decision decoding, built only on long-published hypercube techniques (a patent screen found no blocking claims; see [Prior art](#prior-art)).
+Most open-source ECC libraries sit at two extremes: small hard-decision crates (Reed–Solomon, Hamming, CRC) or heavy C++/Python research frameworks (AFF3CT, Sionna). `ecc-hypercube` sits in between — a **zero-dependency, `#![forbid(unsafe_code)]` Rust crate** for short- and medium-block soft-decision decoding, built on published hypercube techniques (patented polar variants such as PAC and CRC-aided 5G polar are kept out; see [Prior art](#prior-art)).
 
 - **Two complementary hypercube decoders (`n = 128..2048`):** RM automorphism ensemble (`ReedMuller`) for best WER at `n ≤ 512`, and Hypercube **GLDPC** (*Generalized Low-Density Parity-Check*, replacing single parity checks with extended-Hamming hypercube checks; `HypercubeGldpc`) for fast decoding + built-in error detection at `n ≥ 512`.
 - **Provable ML certificates (RM):** `decode_soft_ensemble_checked` proves when no codeword is closer to the received word, letting the ensemble stop early.
@@ -15,7 +15,7 @@ Most open-source ECC libraries sit at two extremes: small hard-decision crates (
 
 ### Learn coding theory on one shape
 
-This project started in 2013 when visualizing Hamming `(7, 4)` on a 3D cube and generalizing it to higher dimensions independently led back to Reed–Muller codes (1954). Starting from the **hypercube** instead of finite fields or generator matrices is what made every later step click: halving a cube *is* the Plotkin/Polar butterfly, tilting a cube *is* an affine automorphism (`GA(m, 2)`), the smallest subcube *is* the minimum distance behind the ML proof, and slicing `n` vertices into small 4- and 5-cubes two different ways *is* Hypercube GLDPC.
+This project started in 2013 when visualizing Hamming `(7, 4)` on a 3D cube and generalizing it to higher dimensions independently led back to Reed–Muller codes (1954). Starting from the **hypercube** instead of finite fields or generator matrices is what made every later step click: halving a cube *is* the Plotkin/Polar butterfly, tilting a cube *is* an affine automorphism (`GA(m, 2)`), the smallest subcube *is* the minimum distance behind the ML proof, and grouping `n` bits into small 4- and 5-cubes two different ways *is* Hypercube GLDPC.
 
 Every stage stays in the crate (including the bit-for-bit 2013 decoder) so you can trace 70 years of coding theory on **one geometric object**:
 
@@ -24,8 +24,8 @@ Every stage stays in the crate (including the bit-for-bit 2013 decoder) so you c
 | **1. Encoding & parity (1954)** | Bits sit on cube corners; every parity check is a subcube whose corners XOR to 0 (one 12-line `superset_xor` butterfly) | [`src/hypercube.rs`](src/hypercube.rs), [`src/cube_code.rs`](src/cube_code.rs) |
 | **2. Hard voting (1954 / 2013)** | Majority vote across parallel subcubes, kept bit-for-bit identical to the original 2013 C++ decoder | `CubeCode::decode` |
 | **3. Soft list decoding (2006)** | Run the same cube-halving butterfly on soft confidences (LLRs), with an `RM(1, d)` FWHT base case | [`src/list_decoder.rs`](src/list_decoder.rs) |
-| **4. Ensemble + ML proof (1991 / 2021)** | Tilt and relabel the cube's corners (`GA(m, 2)`) to decode from multiple angles; the smallest subcube (`d_min`) certifies ML | `CubeCode::decode_soft_ensemble_checked` |
-| **5. Hypercube GLDPC (1976 / 1981)** | Scale to `n = 512–2048` by slicing the vertices into small 4- and 5-cubes two different ways and passing FWHT APPs between cuts | [`src/gldpc.rs`](src/gldpc.rs) |
+| **4. Ensemble + ML proof (1991 / 2021)** | Tilt and relabel the cube's corners (`GA(m, 2)`) to decode from multiple angles; the smallest subcube (`d_min`) certifies ML | `ReedMuller::decode_soft_ensemble_checked` |
+| **5. Hypercube GLDPC (1976 / 1981)** | Scale to `n = 256–2048` by grouping the bits into small 4- and 5-cubes two different ways (the second through a fixed pseudo-random interleaver) and passing FWHT APPs between the two | [`src/gldpc.rs`](src/gldpc.rs) |
 
 The visual walkthroughs live in the [5-part blog series](#history) (Parts 1–2 published, Parts 3–5 coming).
 
@@ -130,9 +130,9 @@ hypercube-based majority-logic decoding, and grew along with the blog series
 classical:
 
 - **The code and hypercube geometry:** Reed–Muller codes (Muller, 1954; Reed, 1954), where codewords are evaluations of Boolean polynomials on the $m$-dimensional hypercube and "unit cubes" are monomial supports. `CubeCode(m, m - r - 1)` is the punctured length-$(2^m - 1)$ code (leaving vertex `0` empty, like the 7-bit Hamming `(7, 4)` 3-cube in the blog); `ReedMuller::new(r, m)` wraps `CubeCode` and appends an overall parity bit at vertex `0` for the full length-$2^m$ code.
-- **Hard decoder (`decode`):** Irving Reed's 1954 majority-logic decoder over parallel flats (independently rediscovered in the 2013 C++ program via the hypercube picture), accelerated here with a butterfly sweep (`superset_xor`, the standard Boolean/Plotkin transform $F^{\otimes m}$) and 64-bit SWAR popcount voting. It produces bit-for-bit identical results to the 2013 C++ program across 1,134 randomized cross-check jobs ($m = 2\text{--}15$).
-- **Soft list decoder (`decode_soft`, `decode_soft_list`):** Dumer–Shabunov recursive list decoding of Reed–Muller codes (2006) and Tal–Vardy Successive Cancellation List (SCL) decoding (2015), using Balatsoukas-Stimming et al.'s hardware-friendly min-sum LLR path metrics (2015), with the same butterfly pattern as `superset_xor` run on soft values.
-- **Automorphism ensemble (`decode_soft_ensemble`):** Geiselhart et al.'s automorphism-ensemble decoding of Reed–Muller codes (2021). RM codes are unchanged by affine relabellings of the cube, $x \mapsto Ax \oplus b$, so the decoder runs on several relabelled copies and keeps the closest codeword. The first copy is the identity, so it is never worse than plain SCL.
+- **Hard decoder (`decode`):** Irving Reed's 1954 majority-logic decoder over parallel flats (independently rediscovered in the 2013 C++ program via the hypercube picture), accelerated here with a butterfly sweep (`superset_xor`, the standard Boolean/Plotkin transform $F^{\otimes m}$) and 64-bit SWAR popcount voting. It matched the 2013 C++ program bit-for-bit in an offline cross-check of 1,134 randomized jobs ($m = 2\text{--}15$).
+- **Soft list decoder (`decode_soft`, `decode_soft_list`):** Dumer–Shabunov recursive list decoding of Reed–Muller codes (2006) and Tal–Vardy Successive Cancellation List (SCL) decoding (2015), using Balatsoukas-Stimming et al.'s hardware-friendly min-sum LLR path metrics (2015), with the same butterfly pattern as `superset_xor` run on soft values. First-order `RM(1, d)` subtrees are decoded exactly with the fast Hadamard transform (Green, 1966).
+- **Automorphism ensemble (`decode_soft_ensemble`):** Geiselhart et al.'s automorphism-ensemble decoding of Reed–Muller codes (2021). RM codes are unchanged by affine relabellings of the cube, $x \mapsto Ax \oplus b$, so the decoder runs on several relabelled copies and keeps the closest codeword. The first copy is the identity, so it is never worse than plain SCL. For $n \ge 512$, copies beyond the first apply a nested one-level Plotkin (1960) split before relabelling; the ensemble also includes a scale-invariant early-stop heuristic (stopping when the list's runner-up costs more than $1.8\times$ the best path), both local variants in this crate.
 - **Hypercube GLDPC (`HypercubeGldpc`):** generalized LDPC codes, which replace single parity checks with short component codes on a Tanner graph (Tanner, 1981). Each bit sits in two extended-Hamming components, i.e. small RM(m − 2, m) cubes, as in Lentmaier and Zigangirov's Hamming-component GLDPC codes (1999). Each component is decoded with the exact symbol-by-symbol APP of Hartmann and Rudolph (1976), computed over the dual code RM(1, m) with a fast Walsh–Hadamard transform.
 - **Maximum-likelihood certificate (`decode_soft_checked`, `decode_soft_ensemble_checked`):** the Taipale–Pursley sufficient condition for maximum likelihood (1991), which uses the minimum distance $2^{m-r}$, plus the standard branch-and-bound argument that no pruned list path can beat a codeword costing no more than the cheapest pruned metric. The ensemble stops at the first copy whose answer is certified.
 
@@ -246,7 +246,8 @@ Covers the original C++ unit tests, random round trips with up to the guaranteed
 number of bit errors, soft SCL round trips, checks that the automorphism ensemble is never
 worse than plain SCL and that every certified decision is truly maximum likelihood, and a
 bit-exact comparison against the C++ tool's recorded output (including received words beyond
-the correction bound).
+the correction bound). GLDPC tests cover code dimensions, encode/decode round trips and
+random-codeword AWGN decoding.
 
 The results tables come from `examples/wer.rs` and AFF3CT (see [Reproduce](#reproduce)).
 The dependency-free benchmarks are timing micro-benchmarks and research baselines:

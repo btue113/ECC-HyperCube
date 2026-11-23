@@ -1,6 +1,6 @@
 [package]
 name = "ecc-hypercube"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 authors = ["Tue Bui <bomot113@gmail.com>"]
 description = "Fast encoding and decoding of Reed-Muller error correcting codes based on hypercubes"
