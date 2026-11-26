@@ -28,7 +28,7 @@ cargo clippy --lib --bins --tests
 
 ## Good places to contribute
 
-- **Performance:** Certified cheap first pass for the RM automorphism ensemble; explicit `RmScratch` workspace to replace the internal `Mutex` and allow lock-free multithreading; `Subtree::Spc` (Wagner 1954 single-parity-check) fast-node.
+- **Performance:** `Subtree::Spc` (Wagner 1954 single-parity-check) fast-node.
 - **Features:** `no_std` + `alloc` support; puncturing/shortening helpers; fading-channel evaluation in `examples/wer.rs`; Python bindings (`PyO3` / `maturin`); WebAssembly interactive demo.
 - **Reproducibility & docs:** Scripts to regenerate all README tables into CSV; WER plots for the README.
 

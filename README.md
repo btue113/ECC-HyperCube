@@ -232,7 +232,10 @@ if decision.converged {
 }
 ```
 
-A `ReedMuller` locks its list decoder while decoding, so give each thread its own instance.
+A `ReedMuller` locks its list decoder while decoding. To share one instance across threads,
+give each thread an `RmScratch::new()` and call the `*_with_scratch` methods
+(`decode_soft_list_with_scratch`, `decode_soft_checked_with_scratch`,
+`decode_soft_ensemble_checked_with_scratch`), which take no lock.
 
 `SoftDecision` reports `message`, `cost` (the sum of `|llr|` where the codeword disagrees
 with the received signs), `runner_up_cost`, `pruned_bound`, `distance_certified` (proved by

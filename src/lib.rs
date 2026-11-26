@@ -20,7 +20,7 @@ pub mod hypercube;
 mod list_decoder;
 pub mod reed_muller;
 
-pub use cube_code::{CubeCode, SoftDecision};
+pub use cube_code::{CubeCode, RmScratch, SoftDecision};
 pub use gldpc::{GldpcDecision, GldpcRate, GldpcScratch, HypercubeGldpc};
 pub use hypercube::HyperCube;
 pub use reed_muller::ReedMuller;

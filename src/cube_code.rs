@@ -51,8 +51,8 @@ pub struct CubeCode {
     voter_complements: Vec<Vec<u32>>,
     /// Materialized only when a caller requests the public cube view.
     voters: Vec<OnceLock<Vec<HyperCube>>>,
-    /// List decoders reused across calls, one per width (`list_decoder` picks the slot).
-    list_decoders: Mutex<Vec<Option<Box<dyn ListDecode>>>>,
+    /// List decoders reused across calls by convenience methods that don't pass an [`RmScratch`].
+    list_decoders: Mutex<RmScratch>,
     /// Lazily constructed Plotkin subcodes `(RM(r-1, m-1), RM(r, m-1))` for nested
     /// automorphism-ensemble decoding when `cw_dims >= 9`.
     nested_children: OnceLock<Box<(CubeCode, CubeCode)>>,
@@ -119,7 +119,7 @@ impl CubeCode {
             cubes_in_level,
             voter_complements,
             voters,
-            list_decoders: Mutex::new(Vec::new()),
+            list_decoders: Mutex::new(RmScratch::new()),
             nested_children: OnceLock::new(),
         })
     }
@@ -329,11 +329,34 @@ impl CubeCode {
         self.decode_soft_list_with_zero(received, None, list_size)
     }
 
+    /// [`CubeCode::decode_soft_list`] using a caller-owned [`RmScratch`] instead of the
+    /// internal `Mutex`, so threads can share one code.
+    pub fn decode_soft_list_with_scratch(
+        &self,
+        received: &[f64],
+        list_size: usize,
+        scratch: &mut RmScratch,
+    ) -> Result<Bits, Error> {
+        check_len(self.cw_len, received.len())?;
+        self.decode_soft_list_with_zero_scratch(received, None, list_size, scratch)
+    }
+
     pub(crate) fn decode_soft_list_with_zero(
         &self,
         received: &[f64],
         zero_vertex_llr: Option<f64>,
         list_size: usize,
+    ) -> Result<Bits, Error> {
+        let mut guard = self.list_decoders.lock().unwrap_or_else(|e| e.into_inner());
+        self.decode_soft_list_with_zero_scratch(received, zero_vertex_llr, list_size, &mut guard)
+    }
+
+    pub(crate) fn decode_soft_list_with_zero_scratch(
+        &self,
+        received: &[f64],
+        zero_vertex_llr: Option<f64>,
+        list_size: usize,
+        scratch: &mut RmScratch,
     ) -> Result<Bits, Error> {
         if self.p_dims == 0 {
             return Ok(received.iter().map(|&y| y > 0.0).collect());
@@ -352,8 +375,7 @@ impl CubeCode {
         }
 
         let y = self.vertex_readings(received, zero_vertex_llr.unwrap_or(0.0));
-        let mut guard = self.list_decoders.lock().unwrap_or_else(|e| e.into_inner());
-        let decoder = list_decoder(&mut guard, self.cw_dims, list_size);
+        let decoder = scratch.decoder(self.cw_dims, list_size);
         decoder.decode(&y, list_size, &self.subtrees);
         let mut word = Vec::new();
         decoder.word(0, &mut word);
@@ -382,6 +404,24 @@ impl CubeCode {
         list_size: usize,
         ensemble_size: usize,
     ) -> Result<SoftDecision, Error> {
+        let mut guard = self.list_decoders.lock().unwrap_or_else(|e| e.into_inner());
+        self.decode_soft_ensemble_with_zero_scratch(
+            received,
+            zero_vertex_llr,
+            list_size,
+            ensemble_size,
+            &mut guard,
+        )
+    }
+
+    pub(crate) fn decode_soft_ensemble_with_zero_scratch(
+        &self,
+        received: &[f64],
+        zero_vertex_llr: f64,
+        list_size: usize,
+        ensemble_size: usize,
+        scratch: &mut RmScratch,
+    ) -> Result<SoftDecision, Error> {
         if self.p_dims == 0 {
             return Err(Error::Unsupported("ensemble decoding needs p_dims > 0"));
         }
@@ -389,8 +429,8 @@ impl CubeCode {
         let ensemble_size = ensemble_size.max(1);
         let y = self.vertex_readings(received, zero_vertex_llr);
         let mut best = vec![false; self.cw_len + 1];
-        let (cost, runner_up_cost, pruned_bound, distance_certified) =
-            self.decode_vertices_ensemble(&y, list_size, ensemble_size, NEST_LEVELS, &mut best);
+        let (cost, runner_up_cost, pruned_bound, distance_certified) = self
+            .decode_vertices_ensemble(&y, list_size, ensemble_size, NEST_LEVELS, &mut best, scratch);
         let message =
             self.bit_to_cube[..self.data_len].iter().map(|&v| best[v as usize]).collect();
         Ok(SoftDecision {
@@ -414,6 +454,7 @@ impl CubeCode {
         ensemble_size: usize,
         nest_levels: u32,
         best: &mut [bool],
+        scratch: &mut RmScratch,
     ) -> (f64, f64, f64, bool) {
         let n = self.cw_len + 1;
 
@@ -424,6 +465,44 @@ impl CubeCode {
         if (0..n).all(|v| self.is_unfrozen[v] || !mask[v]) {
             best.copy_from_slice(&hard);
             return (0.0, f64::INFINITY, f64::INFINITY, true);
+        }
+
+        // Cheap first pass: try a small list (L = 1, then L = 4 for lists of 16 or more) on
+        // the identity cube and exit if the decision clears the same bar as copy 0 of the
+        // full ensemble. Two exits prove maximum likelihood (distance test, cost <= pruned
+        // bound); the other two are the ensemble's heuristics (fewer than d/2 flips, and the
+        // runner-up ratio at L >= 4), now applied to the smaller list. An L = 1 exit has no
+        // runner-up, so it reports `runner_up_cost = INFINITY`.
+        if list_size > 1 && ensemble_size > 1 {
+            let min_distance = 1usize << (self.p_dims + 1);
+            let mut word = Vec::with_capacity(n);
+            for &probe in &[1usize, 4usize] {
+                if probe >= list_size || (probe == 4 && list_size < 16) {
+                    continue;
+                }
+                let decoder = scratch.decoder(self.cw_dims, probe);
+                decoder.decode(y, probe, &self.subtrees);
+                let pruned = decoder.pruned_min();
+                let runner_up = if decoder.paths() > 1 { decoder.metric(1) } else { f64::INFINITY };
+                decoder.word(0, &mut word);
+                let mut cost = 0.0;
+                let mut flips = 0usize;
+                for (&c, &l) in word.iter().zip(y) {
+                    if c != (l > 0.0) {
+                        cost += l.abs();
+                        flips += 1;
+                    }
+                }
+                let dist_cert = is_ml_certified(&word, y, min_distance);
+                if dist_cert
+                    || cost <= pruned
+                    || flips < self.needed_votes
+                    || (probe >= 4 && runner_up > EARLY_STOP_COST_RATIO * cost)
+                {
+                    best.copy_from_slice(&word);
+                    return (cost, runner_up, pruned, dist_cert);
+                }
+            }
         }
 
         // For n >= 512 and 2 <= r <= m - 2, recurse via Plotkin's decomposition
@@ -441,9 +520,10 @@ impl CubeCode {
                 ensemble_size,
                 nest_levels,
                 best,
+                scratch,
             );
         }
-        self.decode_vertices_flat(y, list_size, ensemble_size, best)
+        self.decode_vertices_flat(y, list_size, ensemble_size, best, scratch)
     }
 
     /// Automorphism-ensemble SCL on the whole cube: copy 0 is the identity, the rest are
@@ -454,11 +534,11 @@ impl CubeCode {
         list_size: usize,
         ensemble_size: usize,
         best: &mut [bool],
+        scratch: &mut RmScratch,
     ) -> (f64, f64, f64, bool) {
         let n = self.cw_len + 1;
         let min_distance = 1usize << (self.p_dims + 1);
-        let mut guard = self.list_decoders.lock().unwrap_or_else(|e| e.into_inner());
-        let decoder = list_decoder(&mut guard, self.cw_dims, list_size);
+        let decoder = scratch.decoder(self.cw_dims, list_size);
         let mut word = Vec::with_capacity(n);
         // A fixed seed keeps decoding deterministic.
         let mut seed = 0x9E37_79B9_7F4A_7C15u64;
@@ -557,9 +637,10 @@ impl CubeCode {
         ensemble_size: usize,
         nest_levels: u32,
         best: &mut [bool],
+        scratch: &mut RmScratch,
     ) -> (f64, f64, f64, bool) {
         let (mut best_cost, mut runner_up_cost, pruned_bound, mut distance_certified) =
-            self.decode_vertices_flat(y, list_size, 1, best);
+            self.decode_vertices_flat(y, list_size, 1, best, scratch);
         let mut best_flips = best.iter().zip(y).filter(|&(&c, &l)| c != (l > 0.0)).count();
         if distance_certified
             || best_cost <= pruned_bound
@@ -633,7 +714,7 @@ impl CubeCode {
             }
 
             // 2. Decode u in RM(r-1, m-1) via inner ensemble.
-            u_code.decode_vertices_ensemble(&y_u, u_list, u_copies, nest_levels - 1, &mut u_word);
+            u_code.decode_vertices_ensemble(&y_u, u_list, u_copies, nest_levels - 1, &mut u_word, scratch);
 
             // 3. Combine g(y0, y1, u) and decode c1 in RM(r, m-1).
             for i in 0..half {
@@ -641,7 +722,7 @@ impl CubeCode {
                 let b = y[perm[half + i] as usize];
                 y_v[i] = if u_word[i] { b - a } else { b + a };
             }
-            v_code.decode_vertices_ensemble(&y_v, v_list, v_copies, nest_levels - 1, &mut c1_word);
+            v_code.decode_vertices_ensemble(&y_v, v_list, v_copies, nest_levels - 1, &mut c1_word, scratch);
 
             // 4. Reconstruct c = (c1 ^ u, c1) in unpermuted vertex order and score against y.
             let mut cost = 0.0;
@@ -697,6 +778,17 @@ impl CubeCode {
         zero_vertex_llr: Option<f64>,
         list_size: usize,
     ) -> Result<SoftDecision, Error> {
+        let mut guard = self.list_decoders.lock().unwrap_or_else(|e| e.into_inner());
+        self.decode_soft_checked_with_zero_scratch(received, zero_vertex_llr, list_size, &mut guard)
+    }
+
+    pub(crate) fn decode_soft_checked_with_zero_scratch(
+        &self,
+        received: &[f64],
+        zero_vertex_llr: Option<f64>,
+        list_size: usize,
+        scratch: &mut RmScratch,
+    ) -> Result<SoftDecision, Error> {
         if self.p_dims == 0 {
             return Err(Error::Unsupported("checked decoding needs p_dims > 0"));
         }
@@ -722,8 +814,7 @@ impl CubeCode {
             });
         }
 
-        let mut guard = self.list_decoders.lock().unwrap_or_else(|e| e.into_inner());
-        let decoder = list_decoder(&mut guard, self.cw_dims, list_size);
+        let decoder = scratch.decoder(self.cw_dims, list_size);
         decoder.decode(&y, list_size, &self.subtrees);
         let mut word = Vec::new();
         decoder.word(0, &mut word);
@@ -754,17 +845,35 @@ impl CubeCode {
     }
 }
 
-/// The cached list decoder wide enough for `list_size` paths, created on first use.
-fn list_decoder(
-    cache: &mut Vec<Option<Box<dyn ListDecode>>>,
-    dims: u32,
-    list_size: usize,
-) -> &mut dyn ListDecode {
-    let slot = list_size.next_power_of_two().trailing_zeros() as usize;
-    if cache.len() <= slot {
-        cache.resize_with(slot + 1, || None);
+/// Reusable per-thread workspace for lock-free soft-decision RM decoding.
+///
+/// Create one `RmScratch::new()` per worker thread and pass it to the `*_with_scratch`
+/// methods on [`crate::ReedMuller`] (list, checked and ensemble decoding) or to
+/// [`CubeCode::decode_soft_list_with_scratch`], so threads can share a single code object
+/// without contending on its internal `Mutex`. One scratch serves any code and list size:
+/// list decoders are created on first use and kept for reuse.
+#[derive(Debug, Default)]
+pub struct RmScratch {
+    decoders: Vec<Option<Box<dyn ListDecode>>>,
+}
+
+impl RmScratch {
+    /// An empty workspace; list decoders are allocated on first use.
+    pub fn new() -> Self {
+        Self::default()
     }
-    cache[slot].get_or_insert_with(|| new_list_decoder(dims, list_size)).as_mut()
+
+    /// Cached list decoder for `(dims, list_size)`, created on first use.
+    fn decoder(&mut self, dims: u32, list_size: usize) -> &mut dyn ListDecode {
+        // MAX_LIST_SIZE = 256 => log2(list_size) is in 0..=8 (9 slots per dimension).
+        let slot = (dims as usize) * 9 + list_size.max(1).next_power_of_two().trailing_zeros() as usize;
+        if self.decoders.len() <= slot {
+            self.decoders.resize_with(slot + 1, || None);
+        }
+        self.decoders[slot]
+            .get_or_insert_with(|| new_list_decoder(dims, list_size))
+            .as_mut()
+    }
 }
 
 /// A random invertible `dims x dims` matrix over GF(2), as its columns.
@@ -999,5 +1108,70 @@ mod tests {
         let hard7: Bits = soft7.iter().map(|&y| y > 0.0).collect();
         assert_ne!(code7.decode(&hard7).unwrap(), vec![false; 4]);
         assert_eq!(code7.decode_soft(&soft7).unwrap(), vec![false; 4]);
+    }
+
+    /// Decodes the same AWGN frames with the ensemble (cheap first pass included) and with
+    /// the flat ensemble alone (no first pass). Returns
+    /// `(frames, first-pass word errors, flat word errors, frames where they differ)` and
+    /// asserts that every certified first-pass decision costs no more than the flat one.
+    fn first_pass_vs_flat(m: u32, p: u32, db: f64, list: usize, copies: usize, frames: usize) -> (usize, usize, usize, usize) {
+        let code = CubeCode::new(m, p).unwrap();
+        assert!(code.cw_len + 1 < 512, "the flat decoder is the no-first-pass reference only below n = 512");
+        let n = code.cw_len + 1;
+        let k = code.data_len();
+        let sigma = (1.0 / (2.0 * (k as f64 / n as f64) * 10f64.powf(db / 10.0))).sqrt();
+        let mut seed = 0x5EED_0000_0000_0000u64 ^ ((m as u64) << 8) ^ p as u64;
+        let gaussian = |seed: &mut u64| {
+            let u1 = ((splitmix64(seed) >> 11) as f64 + 1.0) / (1u64 << 53) as f64;
+            let u2 = (splitmix64(seed) >> 11) as f64 / (1u64 << 53) as f64;
+            (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()
+        };
+        let mut scratch = RmScratch::new();
+        let (mut fast_errs, mut flat_errs, mut differ) = (0, 0, 0);
+        let (mut fast_word, mut flat_word) = (vec![false; n], vec![false; n]);
+        for _ in 0..frames {
+            let data: Bits = (0..k).map(|_| splitmix64(&mut seed) & 1 == 1).collect();
+            let cw = code.encode(&data).unwrap();
+            let mut truth = vec![false; n];
+            truth[0] = cw.iter().filter(|&&b| b).count() % 2 == 1;
+            for (&b, &v) in cw.iter().zip(&code.bit_to_cube) {
+                truth[v as usize] = b;
+            }
+            let y: Vec<f64> = truth
+                .iter()
+                .map(|&b| 2.0 / (sigma * sigma) * (if b { 1.0 } else { -1.0 } + sigma * gaussian(&mut seed)))
+                .collect();
+            let (fast_cost, _, fast_pruned, fast_dist) =
+                code.decode_vertices_ensemble(&y, list, copies, NEST_LEVELS, &mut fast_word, &mut scratch);
+            let (flat_cost, _, _, _) = code.decode_vertices_flat(&y, list, copies, &mut flat_word, &mut scratch);
+            if fast_dist || fast_cost <= fast_pruned {
+                assert!(fast_cost <= flat_cost + 1e-9, "certified first-pass word costs more than the flat ensemble's");
+            }
+            fast_errs += (fast_word != truth) as usize;
+            flat_errs += (flat_word != truth) as usize;
+            differ += (fast_word != flat_word) as usize;
+        }
+        (frames, fast_errs, flat_errs, differ)
+    }
+
+    #[test]
+    fn ensemble_first_pass_matches_flat_ensemble() {
+        // RM(3, 7) and RM(4, 8) at 2.5 dB, where word errors are frequent enough to compare.
+        for &(m, p) in &[(7u32, 3u32), (8, 3)] {
+            let (frames, fast, flat, differ) = first_pass_vs_flat(m, p, 2.5, 8, 8, 1000);
+            assert!(fast <= flat + frames / 200, "m = {m}: first pass {fast} vs flat {flat} errors in {frames} frames");
+            assert!(differ <= frames / 100, "m = {m}: {differ} of {frames} decisions differ");
+        }
+    }
+
+    /// Paired WER comparison over many frames; run with
+    /// `cargo test --release first_pass_paired -- --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn first_pass_paired() {
+        for &(m, p, db) in &[(7u32, 3u32, 2.5), (7, 3, 3.0), (7, 3, 3.5), (8, 3, 3.0), (8, 3, 3.5), (8, 5, 2.0), (8, 5, 2.5)] {
+            let (frames, fast, flat, differ) = first_pass_vs_flat(m, p, db, 8, 8, 200_000);
+            println!("m = {m}, p = {p}, {db} dB: first pass {fast}, flat {flat} word errors, {differ} differ, of {frames}");
+        }
     }
 }

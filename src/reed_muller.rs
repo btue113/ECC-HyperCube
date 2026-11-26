@@ -1,7 +1,7 @@
 //! RM(r, m): the punctured cube code extended with an overall parity bit.
 
 use crate::cube_code::CubeCode;
-use crate::{Bits, Error, SoftDecision};
+use crate::{Bits, Error, RmScratch, SoftDecision};
 
 #[derive(Debug)]
 pub struct ReedMuller {
@@ -99,6 +99,68 @@ impl ReedMuller {
         let (&zero_llr, rest) = received.split_last().unwrap();
         self.code.decode_soft_checked_with_zero(rest, Some(zero_llr), list_size)
     }
+
+    /// Lock-free `decode_soft_list` using a caller-owned [`RmScratch`].
+    pub fn decode_soft_list_with_scratch(
+        &self,
+        received: &[f64],
+        list_size: usize,
+        scratch: &mut RmScratch,
+    ) -> Result<Bits, Error> {
+        if received.len() != self.block_len() {
+            return Err(Error::Length { expected: self.block_len(), got: received.len() });
+        }
+        let (&zero_llr, rest) = received.split_last().unwrap();
+        self.code.decode_soft_list_with_zero_scratch(rest, Some(zero_llr), list_size, scratch)
+    }
+
+    /// Lock-free `decode_soft_checked` using a caller-owned [`RmScratch`].
+    pub fn decode_soft_checked_with_scratch(
+        &self,
+        received: &[f64],
+        list_size: usize,
+        scratch: &mut RmScratch,
+    ) -> Result<SoftDecision, Error> {
+        if received.len() != self.block_len() {
+            return Err(Error::Length { expected: self.block_len(), got: received.len() });
+        }
+        let (&zero_llr, rest) = received.split_last().unwrap();
+        self.code.decode_soft_checked_with_zero_scratch(rest, Some(zero_llr), list_size, scratch)
+    }
+
+    /// Lock-free `decode_soft_ensemble` using a caller-owned [`RmScratch`].
+    pub fn decode_soft_ensemble_with_scratch(
+        &self,
+        received: &[f64],
+        list_size: usize,
+        ensemble_size: usize,
+        scratch: &mut RmScratch,
+    ) -> Result<Bits, Error> {
+        Ok(self
+            .decode_soft_ensemble_checked_with_scratch(received, list_size, ensemble_size, scratch)?
+            .message)
+    }
+
+    /// Lock-free `decode_soft_ensemble_checked` using a caller-owned [`RmScratch`].
+    pub fn decode_soft_ensemble_checked_with_scratch(
+        &self,
+        received: &[f64],
+        list_size: usize,
+        ensemble_size: usize,
+        scratch: &mut RmScratch,
+    ) -> Result<SoftDecision, Error> {
+        if received.len() != self.block_len() {
+            return Err(Error::Length { expected: self.block_len(), got: received.len() });
+        }
+        let (&zero_llr, rest) = received.split_last().unwrap();
+        self.code.decode_soft_ensemble_with_zero_scratch(
+            rest,
+            zero_llr,
+            list_size,
+            ensemble_size,
+            scratch,
+        )
+    }
 }
 
 #[cfg(test)]
@@ -123,5 +185,35 @@ mod tests {
         assert_eq!(format_bits(&encoded), "1011000110001101");
         let decoded = rm.decode(&parse_bits("1011100010000101").unwrap()).unwrap();
         assert_eq!(format_bits(&decoded), "10110");
+    }
+
+    #[test]
+    fn scratch_matches_and_shares_across_threads() {
+        use std::sync::Arc;
+        let rm = Arc::new(ReedMuller::new(3, 7).unwrap());
+        let msg: Vec<bool> = (0..rm.message_len()).map(|i| (i * 7 + 3) % 2 == 0).collect();
+        let cw = rm.encode(&msg).unwrap();
+        let mut llrs: Vec<f64> = cw.iter().map(|&b| if b { 2.0 } else { -2.0 }).collect();
+        for &pos in &[3usize, 17, 42, 88, 105] {
+            llrs[pos] = -llrs[pos];
+        }
+        let expected = rm.decode_soft_ensemble_checked(&llrs, 16, 4).unwrap();
+        let handles: Vec<_> = (0..4)
+            .map(|_| {
+                let rm = Arc::clone(&rm);
+                let llrs = llrs.clone();
+                let expected = expected.clone();
+                std::thread::spawn(move || {
+                    let mut scratch = RmScratch::new();
+                    let got = rm.decode_soft_ensemble_checked_with_scratch(&llrs, 16, 4, &mut scratch).unwrap();
+                    assert_eq!(got, expected);
+                    let got_list = rm.decode_soft_list_with_scratch(&llrs, 8, &mut scratch).unwrap();
+                    assert_eq!(got_list, rm.decode_soft_list(&llrs, 8).unwrap());
+                })
+            })
+            .collect();
+        for h in handles {
+            h.join().unwrap();
+        }
     }
 }
