@@ -244,6 +244,8 @@ the minimum-distance test alone) and `certified` (proved by either test).
 cargo test --release
 ```
 
+Building with `RUSTFLAGS="-C target-cpu=native"` lets the compiler use the host CPU's full instruction set. Any gain depends on the CPU: on an Apple M3 Pro it made no measurable difference to GLDPC decoding time, so measure on your own hardware.
+
 Covers the original C++ unit tests, random round trips with up to the guaranteed
 number of bit errors, soft SCL round trips, checks that the automorphism ensemble is never
 worse than plain SCL and that every certified decision is truly maximum likelihood, and a
