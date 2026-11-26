@@ -202,7 +202,11 @@
   function table() {
     const last = runs[runs.length - 1], prev = runs[runs.length - 2];
     const pct = (a, b) => (a == null || b == null) ? null : 100 * (a / b - 1);
-    const cell = p => p == null ? "–" : `<span class="${p > 10 ? "up" : p < -10 ? "down" : ""}">${p > 0 ? "+" : ""}${p.toFixed(0)}%</span>`;
+    const cell = p => {
+      if (p == null) return "–";
+      const r = Math.round(p);
+      return `<span class="${r > 10 ? "up" : r < -10 ? "down" : ""}">${r > 0 ? "+" : ""}${r === 0 ? 0 : r}%</span>`;
+    };
     let html = "<thead><tr><th>Workload</th><th>µs per word</th><th>vs previous</th><th>vs first</th><th>Word errors</th></tr></thead><tbody>";
     names.forEach((name, i) => {
       const v = value(last, name);
