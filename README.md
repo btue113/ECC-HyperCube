@@ -1,5 +1,8 @@
 # ECC-HyperCube
 
+[![CI](https://github.com/btue113/ECC-HyperCube/actions/workflows/ci.yml/badge.svg)](https://github.com/btue113/ECC-HyperCube/actions/workflows/ci.yml)
+[![Crates.io](https://img.shields.io/crates/v/ecc-hypercube.svg)](https://crates.io/crates/ecc-hypercube)
+[![docs.rs](https://docs.rs/ecc-hypercube/badge.svg)](https://docs.rs/ecc-hypercube)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24456001.svg)](https://doi.org/10.5281/zenodo.24456001)
 
 Reed–Muller and Hypercube GLDPC error-correcting codes on the Boolean hypercube, in dependency-free Rust:
@@ -142,7 +145,7 @@ classical:
 - **The code and hypercube geometry:** Reed–Muller codes (Muller, 1954; Reed, 1954), where codewords are evaluations of Boolean polynomials on the $m$-dimensional hypercube and "unit cubes" are monomial supports. `CubeCode(m, m - r - 1)` is the punctured length-$(2^m - 1)$ code (leaving vertex `0` empty, like the 7-bit Hamming `(7, 4)` 3-cube in the blog); `ReedMuller::new(r, m)` wraps `CubeCode` and appends an overall parity bit at vertex `0` for the full length-$2^m$ code.
 - **Hard decoder (`decode`):** Irving Reed's 1954 majority-logic decoder over parallel flats (independently rediscovered in the 2013 C++ program via the hypercube picture), accelerated here with a butterfly sweep (`superset_xor`, the standard Boolean/Plotkin transform $F^{\otimes m}$) and 64-bit SWAR popcount voting. It matched the 2013 C++ program bit-for-bit in an offline cross-check of 1,134 randomized jobs ($m = 2\text{--}15$).
 - **Soft list decoder (`decode_soft`, `decode_soft_list`):** Dumer–Shabunov recursive list decoding of Reed–Muller codes (2006) and Tal–Vardy Successive Cancellation List (SCL) decoding (2015), using Balatsoukas-Stimming et al.'s hardware-friendly min-sum LLR path metrics (2015), with the same butterfly pattern as `superset_xor` run on soft values. First-order `RM(1, d)` subtrees are decoded exactly with the fast Hadamard transform (Green, 1966).
-- **Automorphism ensemble (`decode_soft_ensemble`):** Geiselhart et al.'s automorphism-ensemble decoding of Reed–Muller codes (2021). RM codes are unchanged by affine relabellings of the cube, $x \mapsto Ax \oplus b$, so the decoder runs on several relabelled copies and keeps the closest codeword. The first copy is the identity, so it is never worse than plain SCL. For $n \ge 512$ and $2 \le r \le m-2$, each copy after the first is relabelled and then split once by Plotkin's $(u \mid u \oplus v)$ decomposition (Plotkin, 1960), with a small ensemble decoding each half; the ensemble also includes a scale-invariant early-stop heuristic (stopping when the list's runner-up costs more than $1.8\times$ the best path), both local variants in this crate.
+- **Automorphism ensemble (`decode_soft_ensemble`):** Geiselhart et al.'s automorphism-ensemble decoding of Reed–Muller codes (2021). RM codes are unchanged by affine relabellings of the cube, $x \mapsto Ax \oplus b$, so the decoder runs on several relabelled copies and keeps the closest codeword. The first copy is the identity, so it is never worse than plain SCL; before running the full list or extra copies, a cheap small-list first pass (`L = 1`, plus `L = 4` when `L ≥ 16`) returns immediately if the decision clears the ML certificate or the ensemble's early-stop bar. For $n \ge 512$ and $2 \le r \le m-2$, each copy after the first is relabelled and then split once by Plotkin's $(u \mid u \oplus v)$ decomposition (Plotkin, 1960), with a small ensemble decoding each half; the ensemble also includes a scale-invariant early-stop heuristic (stopping when the list's runner-up costs more than $1.8\times$ the best path), local variants in this crate.
 - **Hypercube GLDPC (`HypercubeGldpc`):** generalized LDPC codes, which replace single parity checks with short component codes on a Tanner graph (Tanner, 1981). Each bit sits in two extended-Hamming components, i.e. small RM(m − 2, m) cubes, as in Lentmaier and Zigangirov's Hamming-component GLDPC codes (1999). Each component is decoded with the exact symbol-by-symbol APP of Hartmann and Rudolph (1976), computed over the dual code RM(1, m) with a fast Walsh–Hadamard transform.
 - **Maximum-likelihood certificate (`decode_soft_checked`, `decode_soft_ensemble_checked`):** the Taipale–Pursley sufficient condition for maximum likelihood (1991), which uses the minimum distance $2^{m-r}$, plus the standard branch-and-bound argument that no pruned list path can beat a codeword costing no more than the cheapest pruned metric. The ensemble stops at the first copy whose answer is certified.
 
@@ -243,7 +246,7 @@ if decision.converged {
 A `ReedMuller` locks its list decoder while decoding. To share one instance across threads,
 give each thread an `RmScratch::new()` and call the `*_with_scratch` methods
 (`decode_soft_list_with_scratch`, `decode_soft_checked_with_scratch`,
-`decode_soft_ensemble_checked_with_scratch`), which take no lock.
+`decode_soft_ensemble_with_scratch`, `decode_soft_ensemble_checked_with_scratch`), which take no lock.
 
 `SoftDecision` reports `message`, `cost` (the sum of `|llr|` where the codeword disagrees
 with the received signs), `runner_up_cost`, `pruned_bound`, `distance_certified` (proved by
@@ -334,6 +337,8 @@ implementation by the same author and is licensed only as above; nothing in this
 GPL-licensed.
 
 ### Contribution
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on building, testing, and submitting pull requests.
 
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in
 the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without
