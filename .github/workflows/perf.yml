@@ -1,11 +1,18 @@
 name: Perf
 
-# Times fixed decode workloads on every push to main, as a percentage of a pinned baseline
-# commit measured on the same runner (runner CPUs differ by 1.3-1.6x), and appends them to a
-# history chart on GitHub Pages (gh-pages branch, /dev/bench/). See ci/perf.py.
+# Times fixed decode workloads on pushes to main that touch code, normalized to reference
+# us/word via a pinned baseline commit measured on the same runner (runner CPUs differ by
+# 1.3-1.6x), and appends them to a history chart on GitHub Pages (gh-pages, /dev/bench/).
+# See ci/perf.py.
 on:
   push:
     branches: [main]
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+      - "examples/perf_ci.rs"
+      - "ci/perf.py"
+      - ".github/workflows/perf.yml"
   workflow_dispatch:
 
 permissions:
@@ -15,6 +22,8 @@ env:
   # Newest commit with every workload when baseline timing was introduced. Changing it changes
   # the unit of the whole history: re-run the Perf backfill workflow afterwards.
   PERF_BASELINE: 179e6b2045ed92e0083cef39068e0972f93ec365
+  # Pin rustc so LLVM upgrades don't introduce step changes; keep in sync with perf-backfill.yml.
+  RUST_TOOLCHAIN: "1.99.0"
 
 concurrency:
   group: perf
@@ -27,7 +36,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
       - uses: Swatinem/rust-cache@v2
       - name: Run perf workloads against the baseline
         run: python3 ci/perf.py measure --rev "$GITHUB_SHA" --base "$PERF_BASELINE" --work "$RUNNER_TEMP/perf" --out perf.json

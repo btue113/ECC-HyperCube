@@ -5,9 +5,9 @@
 //! ```
 //!
 //! Every workload decodes the same pre-generated frames (fixed seeds) on one thread. Each is
-//! timed over several passes and reports the fastest pass in µs per word, which is the least
-//! noisy statistic on shared CI runners. The word-error count is deterministic, so a change
-//! in it means the decoder's output changed, not just its speed.
+//! timed over several passes and reports the median pass in µs per word, which resists both
+//! noisy-neighbor spikes and one-off turbo outliers on shared CI runners. The word-error count
+//! is deterministic, so a change in it means the decoder's output changed, not just its speed.
 //!
 //! A workload that panics is reported and skipped, so the rest still run. The `perf-group`
 //! tags let `ci/perf.py` strip workloads whose API an older commit lacks.
@@ -21,7 +21,7 @@ use ecc_hypercube::{GldpcRate, HypercubeGldpc}; // perf-group: gldpc
 use std::hint::black_box;
 use std::time::Instant;
 
-const PASSES: usize = 5;
+const PASSES: usize = 7;
 
 struct Rng(u64);
 
@@ -56,21 +56,22 @@ struct Result {
     detail: String,
 }
 
-/// Times `decode(frame) -> word error?` over all frames, `PASSES` times; keeps the fastest.
+/// Times `decode(frame) -> word error?` over all frames, `PASSES` times; keeps the median.
 fn time_frames(frames: usize, mut decode: impl FnMut(usize) -> bool) -> (f64, usize) {
     let mut errors = 0;
     for i in 0..frames {
         errors += decode(i) as usize;
     }
-    let mut best = f64::INFINITY;
+    let mut times = Vec::with_capacity(PASSES);
     for _ in 0..PASSES {
         let t0 = Instant::now();
         for i in 0..frames {
             black_box(decode(i));
         }
-        best = best.min(t0.elapsed().as_secs_f64() * 1e6 / frames as f64);
+        times.push(t0.elapsed().as_secs_f64() * 1e6 / frames as f64);
     }
-    (best, errors)
+    times.sort_by(f64::total_cmp);
+    (times[PASSES / 2], errors)
 }
 
 fn hard(m: u32, p: u32, frames: usize) -> Result {
