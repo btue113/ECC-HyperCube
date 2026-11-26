@@ -195,7 +195,7 @@
       legend: { orientation: "h", x: 0, y: 1.0, yanchor: "bottom", font: { size: 12 } },
       xaxis: { type: "category", title: { text: "commit" }, gridcolor: grid, linecolor: css("--border"), tickfont: { family: "ui-monospace, Menlo, monospace" }, automargin: true },
       yaxis: mode === "rel"
-        ? { title: { text: "% of baseline commit's time (log scale)" }, type: "log", ticksuffix: "%", gridcolor: grid, zeroline: false }
+        ? { title: { text: "% of baseline commit's time (log scale)" }, type: "log", tickvals: [25, 50, 100, 200, 500, 1000, 2000, 5000], ticktext: ["25%", "50%", "100%", "200%", "500%", "1000%", "2000%", "5000%"], gridcolor: grid, zeroline: false }
         : { title: { text: "µs per word (log scale)" }, type: "log", gridcolor: grid, zeroline: false },
       shapes: mode === "rel" ? [{ type: "line", xref: "paper", x0: 0, x1: 1, y0: 100, y1: 100, line: { color: css("--text-muted"), width: 1, dash: "dot" } }] : [],
     };
