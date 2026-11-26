@@ -99,15 +99,16 @@
 <body>
 <main>
   <h1>ecc-hypercube decode time</h1>
-  <p class="sub">One point per commit to <code>main</code>. Each workload decodes the same frames on one thread
-    of a GitHub <code>ubuntu-latest</code> runner; the value is the fastest of 5 passes.</p>
+  <p class="sub">One point per commit to <code>main</code>. Each run builds the commit and a fixed baseline commit
+    (<code>179e6b2</code>) on the same GitHub <code>ubuntu-latest</code> runner, decodes the same frames on one thread
+    with each, and reports the commit's time as a percentage of the baseline's.</p>
 
   <div class="card">
     <div class="controls">
       <span class="label">Show</span>
       <div class="seg" id="mode">
-        <button data-mode="rel" aria-pressed="true">Change vs first commit</button>
-        <button data-mode="abs" aria-pressed="false">µs per word (log)</button>
+        <button data-mode="rel" aria-pressed="true">% of baseline</button>
+        <button data-mode="abs" aria-pressed="false">µs per word (log, varies by runner)</button>
       </div>
       <span class="label">Commits</span>
       <div class="seg" id="range">
@@ -118,8 +119,8 @@
     </div>
     <div id="chart" role="img" aria-label="Decode time per commit for every workload"></div>
     <div id="commit">Hover a commit to see its message; click a point to open the commit.</div>
-    <p class="note">Shared runners vary by about 10–20% between runs, so look for steps that persist, not single wiggles.
-      Slowdowns over 50% get a comment on the commit.</p>
+    <p class="note">Runner CPUs differ by up to 1.6× in absolute speed, but that cancels out of the percentage;
+      about ±3% noise remains. Slowdowns over 15% get a comment on the commit.</p>
     <p id="empty">No results yet.</p>
   </div>
 
@@ -144,18 +145,21 @@
   const names = [];
   for (const run of runs) for (const b of run.benches) if (!names.includes(b.name)) names.push(b.name);
 
+  const cpuOf = run => { const parts = (run.benches[0].extra || "").split("; "); return parts.length > 2 ? parts[parts.length - 1] : ""; };
   // Labels must be unique on a category axis: a re-run of the same commit gets "sha (2)".
   const seen = {};
   const commits = runs.map(r => ({
     sha: (s => (seen[s] = (seen[s] || 0) + 1) > 1 ? `${s} (${seen[s]})` : s)(r.commit.id.slice(0, 7)),
     url: r.commit.url,
     message: r.commit.message.split("\n")[0],
+    cpu: cpuOf(r),
     date: new Date(r.commit.timestamp || r.date),
   }));
-  const value = (run, name) => { const b = run.benches.find(b => b.name === name); return b ? b.value : null; };
+  const bench = (run, name) => run.benches.find(b => b.name === name);
+  const value = (run, name) => { const b = bench(run, name); return b ? b.value : null; };
+  const micros = (run, name) => { const m = /^([\d.]+) us\/word/.exec((bench(run, name) || {}).extra || ""); return m ? +m[1] : null; };
   const errors = (run, name) => {
-    const b = run.benches.find(b => b.name === name);
-    const m = b && /^(\d+) \/ (\d+)/.exec(b.extra || "");
+    const m = /(\d+) \/ (\d+) word errors/.exec((bench(run, name) || {}).extra || "");
     return m ? { errs: +m[1], frames: +m[2] } : null;
   };
 
@@ -168,17 +172,16 @@
     const view = runs.slice(start);
     const x = commits.slice(start).map(c => c.sha);
     const traces = names.map((name, i) => {
-      const raw = view.map(r => value(r, name));
-      const base = runs.map(r => value(r, name)).find(v => v != null);
-      const y = mode === "rel" ? raw.map(v => v == null ? null : 100 * v / base) : raw;
+      const us = view.map(r => micros(r, name));
+      const y = mode === "rel" ? view.map(r => value(r, name)) : us;
       const color = css(`--s${i + 1}`);
       return {
         name, x, y, type: "scatter", mode: "lines+markers", connectgaps: false,
         line: { color, width: 2 },
         marker: { color, size: 8, symbol: SYMBOLS[i % SYMBOLS.length], line: { color: css("--surface-1"), width: 2 } },
-        customdata: raw.map(v => v == null ? "" : fmt(v)),
+        customdata: us.map(v => v == null ? "" : fmt(v)),
         hovertemplate: mode === "rel"
-          ? "%{y:.0f}% · %{customdata} µs/word<extra>%{fullData.name}</extra>"
+          ? "%{y:.1f}% · %{customdata} µs/word<extra>%{fullData.name}</extra>"
           : "%{customdata} µs/word<extra>%{fullData.name}</extra>",
       };
     });
@@ -192,7 +195,7 @@
       legend: { orientation: "h", x: 0, y: 1.0, yanchor: "bottom", font: { size: 12 } },
       xaxis: { type: "category", title: { text: "commit" }, gridcolor: grid, linecolor: css("--border"), tickfont: { family: "ui-monospace, Menlo, monospace" }, automargin: true },
       yaxis: mode === "rel"
-        ? { title: { text: "% of first commit's time" }, ticksuffix: "%", gridcolor: grid, zeroline: false, rangemode: "tozero" }
+        ? { title: { text: "% of baseline commit's time (log scale)" }, type: "log", ticksuffix: "%", gridcolor: grid, zeroline: false }
         : { title: { text: "µs per word (log scale)" }, type: "log", gridcolor: grid, zeroline: false },
       shapes: mode === "rel" ? [{ type: "line", xref: "paper", x0: 0, x1: 1, y0: 100, y1: 100, line: { color: css("--text-muted"), width: 1, dash: "dot" } }] : [],
     };
@@ -205,21 +208,21 @@
     const cell = p => {
       if (p == null) return "–";
       const r = Math.round(p);
-      return `<span class="${r > 10 ? "up" : r < -10 ? "down" : ""}">${r > 0 ? "+" : ""}${r === 0 ? 0 : r}%</span>`;
+      return `<span class="${r > 5 ? "up" : r < -5 ? "down" : ""}">${r > 0 ? "+" : ""}${r === 0 ? 0 : r}%</span>`;
     };
-    let html = "<thead><tr><th>Workload</th><th>µs per word</th><th>vs previous</th><th>vs first</th><th>Word errors</th></tr></thead><tbody>";
+    let html = "<thead><tr><th>Workload</th><th>% of baseline</th><th>µs per word</th><th>vs previous</th><th>Word errors</th></tr></thead><tbody>";
     names.forEach((name, i) => {
-      const v = value(last, name);
-      const first = runs.map(r => value(r, name)).find(x => x != null);
+      const v = value(last, name), us = micros(last, name);
       const e = errors(last, name), pe = prev && errors(prev, name);
       const changed = e && pe && e.errs !== pe.errs;
       html += `<tr><td class="name"><span class="key" style="background:var(--s${i + 1})"></span>${name}</td>`
-        + `<td>${v == null ? "–" : fmt(v)}</td><td>${cell(prev ? pct(v, value(prev, name)) : null)}</td><td>${cell(pct(v, first))}</td>`
+        + `<td>${v == null ? "–" : v.toFixed(1) + "%"}</td><td>${us == null ? "–" : fmt(us)}</td><td>${cell(prev ? pct(v, value(prev, name)) : null)}</td>`
         + `<td>${e ? `${e.errs} / ${e.frames}` : "–"}${changed ? ` <span class="flag" title="Output changed since the previous commit">was ${pe.errs}</span>` : ""}</td></tr>`;
     });
     const c = commits[commits.length - 1];
     document.getElementById("table").innerHTML = html + "</tbody>";
-    document.querySelector("h2").innerHTML = `Latest commit: <a href="${c.url}" style="color:var(--accent)"><code>${c.sha}</code></a>`;
+    document.querySelector("h2").innerHTML = `Latest commit: <a href="${c.url}" style="color:var(--accent)"><code>${c.sha}</code></a>`
+      + (c.cpu ? ` <span class="label">on ${c.cpu}</span>` : "");
   }
 
   function pressed(groupId, btn) {
@@ -243,7 +246,8 @@
     const c = bySha[ev.points[0].x]; if (!c) return;
     const esc = s => s.replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
     document.getElementById("commit").innerHTML =
-      `<a href="${c.url}"><code>${c.sha}</code></a> · ${c.date.toISOString().slice(0, 10)} · ${esc(c.message)}`;
+      `<a href="${c.url}"><code>${c.sha}</code></a> · ${c.date.toISOString().slice(0, 10)} · ${esc(c.message)}`
+      + (c.cpu ? ` · <span class="label">${esc(c.cpu)}</span>` : "");
   });
   chart.on("plotly_click", ev => { const c = bySha[ev.points[0].x]; if (c) window.open(c.url, "_blank", "noopener"); });
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
