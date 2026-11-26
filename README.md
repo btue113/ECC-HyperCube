@@ -262,6 +262,9 @@ The dependency-free benchmarks are timing micro-benchmarks and research baseline
 - `cargo bench --bench codec`: hard-decision latency across code sizes, then hard, SC, SCL-8
   and SCL-32 latency per code.
 - `cargo bench --bench simd_bench`: single-thread SCL and ensemble decoding time per word.
+- `cargo run --release --example perf_ci`: fixed single-thread decode workloads. CI runs it on
+  every push to `main` and charts the history per commit at
+  <https://btue113.github.io/ECC-HyperCube/dev/bench/>.
 - `cargo bench --bench polar_5g`: Reed–Muller against an in-repo 5G NR polar construction
   (3GPP TS 38.212) on this crate's own SCL decoder. Its modes are `5g`, `nocrc`, `samecrc`,
   `ae` (automorphism ensemble), `cert` (ML certificate), `rmcrc` and `pac`; pick one with

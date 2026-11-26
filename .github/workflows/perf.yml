@@ -1,0 +1,40 @@
+name: Perf
+
+# Times fixed decode workloads on every push to main and appends them to a history chart
+# published on GitHub Pages (gh-pages branch, /dev/bench/). See examples/perf_ci.rs.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: perf
+  cancel-in-progress: false
+
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Run perf workloads
+        run: cargo run --release --example perf_ci -- perf.json
+      - name: Store results and update chart
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: ecc-hypercube decode time
+          tool: customSmallerIsBetter
+          output-file-path: perf.json
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          # Shared runners vary by about 10-20%, so only flag large slowdowns. Alerts show up
+          # as a commit comment; they never fail the build.
+          alert-threshold: "150%"
+          comment-on-alert: true
+          fail-on-alert: false
