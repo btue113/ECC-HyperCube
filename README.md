@@ -33,12 +33,16 @@ The visual walkthroughs live in the [5-part blog series](#history) (Parts 1–2 
 
 ## Results vs. 5G-construction polar codes in AFF3CT
 
+![Word error rate vs. Eb/N0 for the RM ensemble, Hypercube GLDPC and 5G polar SCL8 / ASCL128 at n = 128, 256, 512 and 1024](docs/wer/wer_curves.svg)
+
+*Same setup as the tables below. Data: [`docs/wer/wer.csv`](docs/wer/wer.csv); regenerate with `scripts/wer_curves.py`.*
+
 ### Quick guide: which decoder to pick
 
 | Block length | Use | WER vs. `SCL8` | Speed vs. software `SCL8` | Error detection |
 | :--- | :--- | :--- | :--- | :--- |
-| **`n ≤ 256`** | **RM Ensemble** (`8×4` / `32×8`) | **−0.16 to −0.59 dB** (`8×4`) / **−0.49 to −0.61 dB** (`32×8`) vs. `CRC-11` | `1–1.4×` (`8×4`) / `2.5–3.5×` slower (`32×8`) | None |
-| **`n = 512`** | **RM Ensemble** *(best WER)* | **−0.31 to −0.32 dB** vs. `CRC-11` (`−0.14` to `−0.15` vs. `ASCL128`) | `7–25×` slower | None |
+| **`n ≤ 256`** | **RM Ensemble** (`8×4` / `32×8`) | **−0.16 to −0.59 dB** (`8×4`) / **−0.49 to −0.61 dB** (`32×8`) vs. `CRC-11` | `2.3×` faster to `1.5×` slower (`8×4`) / `2.2–3.9×` slower (`32×8`) | None |
+| **`n = 512`** | **RM Ensemble** *(best WER)* | **−0.31 to −0.32 dB** vs. `CRC-11` (`−0.14` to `−0.15` vs. `ASCL128`) | `8.5–17×` slower | None |
 | **`n = 512`** | **Hypercube GLDPC** *(speed/detection)* | **−0.03 to −0.13 dB** vs. `CRC-24`; `+0.15` to `+0.27 dB` vs. `CRC-11` | **4–5× faster** | Built-in |
 | **`n ≥ 1024`** | **Hypercube GLDPC** | `+0.03` to `+0.12 dB` vs. `CRC-11` | **2.6–3.4× faster** (`10–15×` vs. `SCL32`) | Built-in |
 
@@ -50,11 +54,11 @@ The visual walkthroughs live in the [5-part blog series](#history) (Parts 1–2 
 
 | Code | Setting | `Eb/N0` | vs. `SCL8` (`CRC-11`) | Pure decode | vs. software `SCL8` |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| `(128, 64)` | `8×4` | **3.50 dB** | **−0.59 dB** | 11 µs | `1.0×` (`11.5 µs`) |
-| `(256, 93)` | `32×8` | **2.49 dB** | **−0.61 dB** | 68 µs | `3.5×` slower (`19.4 µs`) |
-| `(256, 163)` | `32×8` | **3.32 dB** | **−0.49 dB** | 55 µs | `2.7×` slower (`20.7 µs`) |
-| `(512, 256)` | `32×8` | **2.48 dB** | **−0.31 dB** | 930 µs | `25×` slower (`37.2 µs`) |
-| `(1024, 386)` | `32×8` | 2.71 dB | `+0.59 dB` | ≈2,500 µs | `40×` slower (`63 µs`) |
+| `(128, 64)` | `8×4` | **3.50 dB** | **−0.59 dB** | 5.1 µs | `2.3×` faster (`11.5 µs`) |
+| `(256, 93)` | `32×8` | **2.49 dB** | **−0.61 dB** | 75 µs | `3.9×` slower (`19.4 µs`) |
+| `(256, 163)` | `32×8` | **3.32 dB** | **−0.49 dB** | 46 µs | `2.2×` slower (`20.7 µs`) |
+| `(512, 256)` | `32×8` | **2.48 dB** | **−0.31 dB** | 650 µs | `17×` slower (`37.2 µs`) |
+| `(1024, 386)` | `32×8` | 2.71 dB | `+0.59 dB` | ≈2,460 µs | `39×` slower (`63 µs`) |
 
 #### Hypercube GLDPC (`RM(2, 4)` / `RM(3, 5)`, exact component APP via Hartmann–Rudolph FWHT, `f32`, 50 iters)
 
@@ -97,6 +101,10 @@ $W gldpc 512 1/2 2.75,3.0           # (512,257)
 $W gldpc 1024 3/8 2.125,2.25,2.375  # (1024,385)
 $W gldpc 1024 1/2 2.25,2.375,2.5    # (1024,513)
 $W gldpc 2048 1/2 2.0,2.125         # (2048,1025)
+
+# WER curve figure (docs/wer/): measure every point, then plot (needs matplotlib)
+python3 scripts/wer_curves.py measure --aff3ct /path/to/aff3ct
+python3 scripts/wer_curves.py plot
 
 # GLDPC false alarms: decode pure noise and count claimed codewords
 $W gldpc-noise 512 3/8 1000000
