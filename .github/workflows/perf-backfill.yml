@@ -1,13 +1,17 @@
 name: Perf backfill
 
-# One-off, manual: re-measures every first-parent commit of main with today's
-# examples/perf_ci.rs on one runner, then replaces the chart history on gh-pages
-# (dev/bench/data.js). Entries for commits pushed after the run started are kept.
+# Manual: re-measures every first-parent commit of main with today's examples/perf_ci.rs,
+# each against the same baseline commit as the Perf workflow, on one runner; then replaces
+# the chart history on gh-pages (dev/bench/data.js). Run it again after changing the
+# workloads or PERF_BASELINE. Entries for commits pushed after the run started are kept.
 on:
   workflow_dispatch:
 
 permissions:
   contents: write
+
+env:
+  PERF_BASELINE: 179e6b2045ed92e0083cef39068e0972f93ec365  # keep in sync with perf.yml
 
 concurrency:
   group: perf
@@ -16,14 +20,14 @@ concurrency:
 jobs:
   backfill:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@stable
       - name: Measure every commit
-        run: python3 ci/perf_backfill.py run --work "$RUNNER_TEMP/perf-backfill" --out backfill.json
+        run: python3 ci/perf.py backfill --base "$PERF_BASELINE" --work "$RUNNER_TEMP/perf" --out backfill.json
       - uses: actions/upload-artifact@v4
         with:
           name: perf-backfill
@@ -32,7 +36,7 @@ jobs:
         run: |
           git fetch origin gh-pages
           git worktree add "$RUNNER_TEMP/gh-pages" origin/gh-pages --detach
-          python3 ci/perf_backfill.py merge --backfill backfill.json --data "$RUNNER_TEMP/gh-pages/dev/bench/data.js"
+          python3 ci/perf.py merge --backfill backfill.json --data "$RUNNER_TEMP/gh-pages/dev/bench/data.js"
           cd "$RUNNER_TEMP/gh-pages"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

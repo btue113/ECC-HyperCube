@@ -10,7 +10,7 @@
 //! in it means the decoder's output changed, not just its speed.
 //!
 //! A workload that panics is reported and skipped, so the rest still run. The `perf-group`
-//! tags let `ci/perf_backfill.py` strip workloads whose API an older commit lacks.
+//! tags let `ci/perf.py` strip workloads whose API an older commit lacks.
 //!
 //! The JSON output is the `customSmallerIsBetter` format of
 //! `benchmark-action/github-action-benchmark`. Workload names are the keys of the history

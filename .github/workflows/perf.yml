@@ -1,7 +1,8 @@
 name: Perf
 
-# Times fixed decode workloads on every push to main and appends them to a history chart
-# published on GitHub Pages (gh-pages branch, /dev/bench/). See examples/perf_ci.rs.
+# Times fixed decode workloads on every push to main, as a percentage of a pinned baseline
+# commit measured on the same runner (runner CPUs differ by 1.3-1.6x), and appends them to a
+# history chart on GitHub Pages (gh-pages branch, /dev/bench/). See ci/perf.py.
 on:
   push:
     branches: [main]
@@ -9,6 +10,11 @@ on:
 
 permissions:
   contents: write
+
+env:
+  # Newest commit with every workload when baseline timing was introduced. Changing it changes
+  # the unit of the whole history: re-run the Perf backfill workflow afterwards.
+  PERF_BASELINE: 179e6b2045ed92e0083cef39068e0972f93ec365
 
 concurrency:
   group: perf
@@ -19,10 +25,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - name: Run perf workloads
-        run: cargo run --release --example perf_ci -- perf.json
+      - name: Run perf workloads against the baseline
+        run: python3 ci/perf.py measure --rev "$GITHUB_SHA" --base "$PERF_BASELINE" --work "$RUNNER_TEMP/perf" --out perf.json
       - name: Store results and update chart
         uses: benchmark-action/github-action-benchmark@v1
         with:
@@ -33,8 +41,8 @@ jobs:
           benchmark-data-dir-path: dev/bench
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
-          # Shared runners vary by about 10-20%, so only flag large slowdowns. Alerts show up
-          # as a commit comment; they never fail the build.
-          alert-threshold: "150%"
+          # Values are relative to the baseline on the same runner, so runner speed mostly cancels;
+          # what remains is a few percent. Alerts are commit comments; they never fail the build.
+          alert-threshold: "115%"
           comment-on-alert: true
           fail-on-alert: false
