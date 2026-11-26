@@ -1,0 +1,41 @@
+name: Perf backfill
+
+# One-off, manual: re-measures every first-parent commit of main with today's
+# examples/perf_ci.rs on one runner, then replaces the chart history on gh-pages
+# (dev/bench/data.js). Entries for commits pushed after the run started are kept.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: perf
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Measure every commit
+        run: python3 ci/perf_backfill.py run --work "$RUNNER_TEMP/perf-backfill" --out backfill.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: perf-backfill
+          path: backfill.json
+      - name: Replace chart history on gh-pages
+        run: |
+          git fetch origin gh-pages
+          git worktree add "$RUNNER_TEMP/gh-pages" origin/gh-pages --detach
+          python3 ci/perf_backfill.py merge --backfill backfill.json --data "$RUNNER_TEMP/gh-pages/dev/bench/data.js"
+          cd "$RUNNER_TEMP/gh-pages"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dev/bench/data.js
+          git commit -m "Backfill perf history for all commits of main"
+          git push origin HEAD:gh-pages

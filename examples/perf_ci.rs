@@ -9,10 +9,15 @@
 //! noisy statistic on shared CI runners. The word-error count is deterministic, so a change
 //! in it means the decoder's output changed, not just its speed.
 //!
+//! A workload that panics is reported and skipped, so the rest still run. The `perf-group`
+//! tags let `ci/perf_backfill.py` strip workloads whose API an older commit lacks.
+//!
 //! The JSON output is the `customSmallerIsBetter` format of
 //! `benchmark-action/github-action-benchmark`. Workload names are the keys of the history
 //! chart: renaming one starts a new chart.
-use ecc_hypercube::{CubeCode, HypercubeGldpc, GldpcRate, ReedMuller};
+use ecc_hypercube::CubeCode;
+use ecc_hypercube::ReedMuller; // perf-group: rm
+use ecc_hypercube::{GldpcRate, HypercubeGldpc}; // perf-group: gldpc
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -100,9 +105,11 @@ fn hard(m: u32, p: u32, frames: usize) -> Result {
     }
 }
 
-fn rm_soft(r: u32, m: u32, copies: usize, list: usize, db: f64, frames: usize) -> Result {
+// perf-group: rm
+/// Fixed AWGN frames for RM(r, m): `(code, messages, received LLRs)`.
+fn rm_frames(r: u32, m: u32, copies: usize, db: f64, frames: usize) -> (ReedMuller, Vec<Vec<bool>>, Vec<Vec<f64>>) {
     let rm = ReedMuller::new(r, m).unwrap();
-    let (n, k) = (rm.block_len(), rm.message_len());
+    let k = rm.message_len();
     let mut rng = Rng(0x5EED_0000 ^ ((r as u64) << 16) ^ ((m as u64) << 8) ^ copies as u64);
     let (mut msgs, mut ys) = (Vec::new(), Vec::new());
     for _ in 0..frames {
@@ -110,14 +117,16 @@ fn rm_soft(r: u32, m: u32, copies: usize, list: usize, db: f64, frames: usize) -
         ys.push(channel(&rm.encode(&msg).unwrap(), db, k, &mut rng));
         msgs.push(msg);
     }
-    let (us, errors) = if copies == 1 {
-        time_frames(frames, |i| rm.decode_soft_list(&ys[i], list).unwrap() != msgs[i])
-    } else {
-        time_frames(frames, |i| rm.decode_soft_ensemble_checked(&ys[i], list, copies).unwrap().message != msgs[i])
-    };
-    let kind = if copies == 1 { format!("SCL-{list}") } else { format!("ensemble {copies}x{list}") };
+    (rm, msgs, ys)
+}
+
+// perf-group: scl
+fn rm_list(r: u32, m: u32, list: usize, db: f64, frames: usize) -> Result {
+    let (rm, msgs, ys) = rm_frames(r, m, 1, db, frames);
+    let (n, k) = (rm.block_len(), rm.message_len());
+    let (us, errors) = time_frames(frames, |i| rm.decode_soft_list(&ys[i], list).unwrap() != msgs[i]);
     Result {
-        name: format!("RM({r},{m}) ({n},{k}) {kind} {db:.1} dB"),
+        name: format!("RM({r},{m}) ({n},{k}) SCL-{list} {db:.1} dB"),
         us_per_word: us,
         errors,
         frames,
@@ -125,6 +134,22 @@ fn rm_soft(r: u32, m: u32, copies: usize, list: usize, db: f64, frames: usize) -
     }
 }
 
+// perf-group: ensemble
+fn rm_ensemble(r: u32, m: u32, copies: usize, list: usize, db: f64, frames: usize) -> Result {
+    let (rm, msgs, ys) = rm_frames(r, m, copies, db, frames);
+    let (n, k) = (rm.block_len(), rm.message_len());
+    let (us, errors) =
+        time_frames(frames, |i| rm.decode_soft_ensemble_checked(&ys[i], list, copies).unwrap().message != msgs[i]);
+    Result {
+        name: format!("RM({r},{m}) ({n},{k}) ensemble {copies}x{list} {db:.1} dB"),
+        us_per_word: us,
+        errors,
+        frames,
+        detail: String::new(),
+    }
+}
+
+// perf-group: gldpc
 fn gldpc(n: usize, db: f64, frames: usize) -> Result {
     let code = HypercubeGldpc::new(n, GldpcRate::Rate1_2).unwrap();
     let (n, k) = (code.codeword_len(), code.message_len());
@@ -156,15 +181,23 @@ fn json_escape(s: &str) -> String {
 
 fn main() {
     let out = std::env::args().nth(1).unwrap_or_else(|| "perf.json".into());
-    let results = [
-        hard(8, 3, 20_000),
-        hard(12, 5, 500),
-        rm_soft(3, 7, 1, 8, 3.0, 4_000),
-        rm_soft(3, 7, 8, 8, 3.0, 4_000),
-        rm_soft(4, 8, 8, 8, 3.5, 2_000),
-        rm_soft(4, 9, 4, 16, 3.0, 500),
-        gldpc(1024, 2.0, 500),
+    type Workload = Box<dyn Fn() -> Result>;
+    let workloads: Vec<Workload> = vec![
+        Box::new(|| hard(8, 3, 20_000)),
+        Box::new(|| hard(12, 5, 500)),
+        Box::new(|| rm_list(3, 7, 8, 3.0, 4_000)), // perf-group: scl
+        Box::new(|| rm_ensemble(3, 7, 8, 8, 3.0, 4_000)), // perf-group: ensemble
+        Box::new(|| rm_ensemble(4, 8, 8, 8, 3.5, 2_000)), // perf-group: ensemble
+        Box::new(|| rm_ensemble(4, 9, 4, 16, 3.0, 500)), // perf-group: ensemble
+        Box::new(|| gldpc(1024, 2.0, 500)), // perf-group: gldpc
     ];
+    let mut results = Vec::new();
+    for (i, w) in workloads.iter().enumerate() {
+        match std::panic::catch_unwind(std::panic::AssertUnwindSafe(w)) {
+            Ok(r) => results.push(r),
+            Err(_) => eprintln!("workload {i} panicked; skipped"),
+        }
+    }
 
     let mut json = String::from("[\n");
     for (i, r) in results.iter().enumerate() {
