@@ -101,14 +101,16 @@
   <h1>ecc-hypercube decode time</h1>
   <p class="sub">One point per commit to <code>main</code>. Each run builds the commit and a fixed baseline commit
     (<code>179e6b2</code>) on the same GitHub <code>ubuntu-latest</code> runner, decodes the same frames on one thread
-    with each, and reports the commit's time as a percentage of the baseline's.</p>
+    with each in alternating rounds, and takes the median ratio of the commit's time to the baseline's. That ratio
+    is shown in µs per word by scaling it with the baseline's reference time on one fixed CPU.</p>
 
   <div class="card">
     <div class="controls">
       <span class="label">Show</span>
       <div class="seg" id="mode">
-        <button data-mode="rel" aria-pressed="true">% of baseline</button>
-        <button data-mode="abs" aria-pressed="false">µs per word (log, varies by runner)</button>
+        <button data-mode="norm" aria-pressed="true">µs per word</button>
+        <button data-mode="rel" aria-pressed="false">% of baseline</button>
+        <button data-mode="raw" aria-pressed="false">Raw µs (varies by runner)</button>
       </div>
       <span class="label">Commits</span>
       <div class="seg" id="range">
@@ -119,8 +121,8 @@
     </div>
     <div id="chart" role="img" aria-label="Decode time per commit for every workload"></div>
     <div id="commit">Hover a commit to see its message; click a point to open the commit.</div>
-    <p class="note">Runner CPUs differ by up to 1.6× in absolute speed, but that cancels out of the percentage;
-      about ±3% noise remains. Slowdowns over 15% get a comment on the commit.</p>
+    <p class="note">Runner CPUs differ by up to 1.6× in absolute speed, but that cancels out of the ratio, so
+      the µs per word and % views move together; about ±2% noise remains. Raw µs is what the runner measured. Slowdowns over 15% get a comment on the commit.</p>
     <p id="empty">No results yet.</p>
   </div>
 
@@ -145,7 +147,28 @@
   const names = [];
   for (const run of runs) for (const b of run.benches) if (!names.includes(b.name)) names.push(b.name);
 
-  const cpuOf = run => { const parts = (run.benches[0].extra || "").split("; "); return parts.length > 2 ? parts[parts.length - 1] : ""; };
+  // Two formats live in data.js. Old: value = % of baseline, extra = "<raw> us/word (baseline <b>); <errors>; <cpu>".
+  // New: value = normalized us/word, extra = "<pct>% of baseline (raw <r> vs <b> us/word); <errors>; <cpu>; <rustc>".
+  const parse = b => {
+    if (!b) return null;
+    const parts = (b.extra || "").split("; ");
+    const num = re => { const m = re.exec(parts[0] || ""); return m ? +m[1] : null; };
+    const old = b.unit === "% of baseline";
+    return {
+      pct: old ? b.value : num(/^([\d.]+)% of baseline/),
+      raw: old ? num(/^([\d.]+) us\/word/) : num(/raw ([\d.]+) vs/),
+      norm: old ? null : b.value,
+      cpu: parts[2] || "", rustc: parts[3] || "",
+    };
+  };
+  // Reference us/word per workload (norm / ratio), recovered from new-format points so old points
+  // can be drawn in the same unit before the history is backfilled.
+  const ref = {};
+  for (const run of runs) for (const b of run.benches) {
+    const p = parse(b);
+    if (p.norm != null && p.pct) ref[b.name] = p.norm / (p.pct / 100);
+  }
+  const cpuOf = run => { const p = parse(run.benches[0]); return [p.cpu, p.rustc].filter(Boolean).join(", "); };
   // Labels must be unique on a category axis: a re-run of the same commit gets "sha (2)".
   const seen = {};
   const commits = runs.map(r => ({
@@ -156,14 +179,23 @@
     date: new Date(r.commit.timestamp || r.date),
   }));
   const bench = (run, name) => run.benches.find(b => b.name === name);
-  const value = (run, name) => { const b = bench(run, name); return b ? b.value : null; };
-  const micros = (run, name) => { const m = /^([\d.]+) us\/word/.exec((bench(run, name) || {}).extra || ""); return m ? +m[1] : null; };
+  const get = (run, name) => parse(bench(run, name));
+  const pctOf = (run, name) => { const p = get(run, name); return p ? p.pct : null; };
+  const rawOf = (run, name) => { const p = get(run, name); return p ? p.raw : null; };
+  const normOf = (run, name) => {
+    const p = get(run, name);
+    if (!p) return null;
+    if (p.norm != null) return p.norm;
+    return p.pct != null && ref[name] ? ref[name] * p.pct / 100 : null;
+  };
   const errors = (run, name) => {
     const m = /(\d+) \/ (\d+) word errors/.exec((bench(run, name) || {}).extra || "");
     return m ? { errs: +m[1], frames: +m[2] } : null;
   };
 
-  let mode = "rel", lastN = 0;
+  // Before any new-format point exists there is no reference time, so start on % of baseline.
+  let mode = Object.keys(ref).length ? "norm" : "rel", lastN = 0;
+  for (const b of document.querySelectorAll("#mode button")) b.setAttribute("aria-pressed", String(b.dataset.mode === mode));
   const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const fmt = v => v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2);
 
@@ -172,17 +204,20 @@
     const view = runs.slice(start);
     const x = commits.slice(start).map(c => c.sha);
     const traces = names.map((name, i) => {
-      const us = view.map(r => micros(r, name));
-      const y = mode === "rel" ? view.map(r => value(r, name)) : us;
+      const pick = { norm: normOf, rel: pctOf, raw: rawOf }[mode];
+      const y = view.map(r => pick(r, name));
+      const extra = view.map(r => {
+        const pct = pctOf(r, name), raw = rawOf(r, name);
+        if (mode === "rel") return raw == null ? "" : ` · raw ${fmt(raw)} µs`;
+        return pct == null ? "" : ` · ${pct.toFixed(1)}% of baseline`;
+      });
       const color = css(`--s${i + 1}`);
       return {
         name, x, y, type: "scatter", mode: "lines+markers", connectgaps: false,
         line: { color, width: 2 },
         marker: { color, size: 8, symbol: SYMBOLS[i % SYMBOLS.length], line: { color: css("--surface-1"), width: 2 } },
-        customdata: us.map(v => v == null ? "" : fmt(v)),
-        hovertemplate: mode === "rel"
-          ? "%{y:.1f}% · %{customdata} µs/word<extra>%{fullData.name}</extra>"
-          : "%{customdata} µs/word<extra>%{fullData.name}</extra>",
+        customdata: extra,
+        hovertemplate: (mode === "rel" ? "%{y:.1f}%" : "%{y:.3s} µs/word") + "%{customdata}<extra>%{fullData.name}</extra>",
       };
     });
     const text = css("--text-secondary"), grid = css("--grid");
@@ -196,7 +231,7 @@
       xaxis: { type: "category", title: { text: "commit" }, gridcolor: grid, linecolor: css("--border"), tickfont: { family: "ui-monospace, Menlo, monospace" }, automargin: true },
       yaxis: mode === "rel"
         ? { title: { text: "% of baseline commit's time (log scale)" }, type: "log", tickvals: [25, 50, 100, 200, 500, 1000, 2000, 5000], ticktext: ["25%", "50%", "100%", "200%", "500%", "1000%", "2000%", "5000%"], gridcolor: grid, zeroline: false }
-        : { title: { text: "µs per word (log scale)" }, type: "log", gridcolor: grid, zeroline: false },
+        : { title: { text: mode === "raw" ? "raw µs per word on the runner (log scale)" : "µs per word, normalized to the reference CPU (log scale)" }, type: "log", gridcolor: grid, zeroline: false },
       shapes: mode === "rel" ? [{ type: "line", xref: "paper", x0: 0, x1: 1, y0: 100, y1: 100, line: { color: css("--text-muted"), width: 1, dash: "dot" } }] : [],
     };
     Plotly.react("chart", traces, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["lasso2d", "select2d"] });
@@ -210,13 +245,13 @@
       const r = Math.round(p);
       return `<span class="${r > 5 ? "up" : r < -5 ? "down" : ""}">${r > 0 ? "+" : ""}${r === 0 ? 0 : r}%</span>`;
     };
-    let html = "<thead><tr><th>Workload</th><th>% of baseline</th><th>µs per word</th><th>vs previous</th><th>Word errors</th></tr></thead><tbody>";
+    let html = "<thead><tr><th>Workload</th><th>µs per word</th><th>% of baseline</th><th>Raw µs</th><th>vs previous</th><th>Word errors</th></tr></thead><tbody>";
     names.forEach((name, i) => {
-      const v = value(last, name), us = micros(last, name);
+      const v = pctOf(last, name), us = rawOf(last, name), n = normOf(last, name);
       const e = errors(last, name), pe = prev && errors(prev, name);
       const changed = e && pe && e.errs !== pe.errs;
       html += `<tr><td class="name"><span class="key" style="background:var(--s${i + 1})"></span>${name}</td>`
-        + `<td>${v == null ? "–" : v.toFixed(1) + "%"}</td><td>${us == null ? "–" : fmt(us)}</td><td>${cell(prev ? pct(v, value(prev, name)) : null)}</td>`
+        + `<td>${n == null ? "–" : fmt(n)}</td><td>${v == null ? "–" : v.toFixed(1) + "%"}</td><td>${us == null ? "–" : fmt(us)}</td><td>${cell(prev ? pct(v, pctOf(prev, name)) : null)}</td>`
         + `<td>${e ? `${e.errs} / ${e.frames}` : "–"}${changed ? ` <span class="flag" title="Output changed since the previous commit">was ${pe.errs}</span>` : ""}</td></tr>`;
     });
     const c = commits[commits.length - 1];
