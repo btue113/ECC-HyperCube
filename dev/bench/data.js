@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795766995536,
+  "lastUpdate": 1795771447799,
   "repoUrl": "https://github.com/btue113/ECC-HyperCube",
   "entries": {
     "ecc-hypercube decode time": [
@@ -22,20 +22,20 @@ window.BENCHMARK_DATA = {
           "tree_id": "9d9ce660c83ea6a708cee221437407cb30a300e2",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/a56c800640fa1efb4d172ae53e3444218308ad5e"
         },
-        "date": 1795682259466,
+        "date": 1795767171038,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 184.27,
-            "extra": "17.84 us/word (baseline 9.68); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 17.984,
+            "extra": "188.3% of baseline (raw 24.31 vs 12.91 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 471.81,
-            "extra": "2852.76 us/word (baseline 604.63); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 2979.459,
+            "extra": "498.2% of baseline (raw 4089.03 vs 820.58 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -58,20 +58,20 @@ window.BENCHMARK_DATA = {
           "tree_id": "d8cf1e44084864c2d747125ee955b7d09e6b766e",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/8f0577c0df9dba301d0ef7043fc6db97ee81d9bd"
         },
-        "date": 1795682309398,
+        "date": 1795767318883,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 187.16,
-            "extra": "18.13 us/word (baseline 9.69); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 18.032,
+            "extra": "188.8% of baseline (raw 24.32 vs 12.88 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 471.43,
-            "extra": "2837.19 us/word (baseline 601.83); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 2978.63,
+            "extra": "498.1% of baseline (raw 4085.51 vs 821.12 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -94,20 +94,20 @@ window.BENCHMARK_DATA = {
           "tree_id": "c8aa44dcebae56d6b5b33e7c1d5e8f9f0adc58c2",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/5c8ff6c04f7c178e61f195ef608ac5583be600ba"
         },
-        "date": 1795682358488,
+        "date": 1795767466679,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 187.59,
-            "extra": "17.54 us/word (baseline 9.35); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 18.03,
+            "extra": "188.8% of baseline (raw 24.32 vs 12.88 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 472.59,
-            "extra": "2745.84 us/word (baseline 581.02); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 2980.183,
+            "extra": "498.4% of baseline (raw 4087.87 vs 820.41 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -130,20 +130,20 @@ window.BENCHMARK_DATA = {
           "tree_id": "6e8b94035cf732463acedfdcc54fd18dafcc3961",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/e654e83c8e32be992ca5a1b6c31680fcd300d509"
         },
-        "date": 1795682407317,
+        "date": 1795767614530,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 186.55,
-            "extra": "17.25 us/word (baseline 9.25); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 18.008,
+            "extra": "188.6% of baseline (raw 24.33 vs 12.90 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 473.87,
-            "extra": "2747.21 us/word (baseline 579.74); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 2979.865,
+            "extra": "498.3% of baseline (raw 4086.02 vs 820.14 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -166,20 +166,20 @@ window.BENCHMARK_DATA = {
           "tree_id": "086fc020274ae056ba1b9cf8bb07f16c7539d388",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/afb6bb6638c6ad679e96f685a18e1fc93e027c46"
         },
-        "date": 1795682455896,
+        "date": 1795767762442,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 185.75,
-            "extra": "17.32 us/word (baseline 9.33); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 18.04,
+            "extra": "188.9% of baseline (raw 24.33 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 471.44,
-            "extra": "2748.98 us/word (baseline 583.10); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 2978.721,
+            "extra": "498.1% of baseline (raw 4087.78 vs 820.67 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -202,20 +202,20 @@ window.BENCHMARK_DATA = {
           "tree_id": "69faccc1a061ef8b714f02235ae17c3f2d48186a",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/3dd5a553614039914367373be16fab48f864355c"
         },
-        "date": 1795682505525,
+        "date": 1795767910238,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 190.18,
-            "extra": "17.98 us/word (baseline 9.45); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 18.055,
+            "extra": "189.1% of baseline (raw 24.34 vs 12.88 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 469.01,
-            "extra": "2830.80 us/word (baseline 603.57); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 2981.394,
+            "extra": "498.6% of baseline (raw 4087.13 vs 820.59 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -238,20 +238,20 @@ window.BENCHMARK_DATA = {
           "tree_id": "e302711ab712d035eb0f3f1ce4b01a02b7cc39bf",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/20930b76614f02c90771c53fb4385ab72970daea"
         },
-        "date": 1795682554160,
+        "date": 1795768058002,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 183.91,
-            "extra": "17.24 us/word (baseline 9.38); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 18.029,
+            "extra": "188.8% of baseline (raw 24.31 vs 12.88 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 468.97,
-            "extra": "2729.62 us/word (baseline 582.04); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 2977.574,
+            "extra": "497.9% of baseline (raw 4085.78 vs 820.58 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -274,20 +274,20 @@ window.BENCHMARK_DATA = {
           "tree_id": "13b3075c782c7be883d3bf561c7b60d72f727723",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/178cb027701c303011739bb2c1bdba05cfde2cf7"
         },
-        "date": 1795682579109,
+        "date": 1795768129930,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 100.56,
-            "extra": "9.31 us/word (baseline 9.26); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.448,
+            "extra": "98.9% of baseline (raw 12.72 vs 12.86 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 100.42,
-            "extra": "579.58 us/word (baseline 577.17); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 598.98,
+            "extra": "100.2% of baseline (raw 821.32 vs 819.95 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -310,26 +310,26 @@ window.BENCHMARK_DATA = {
           "tree_id": "735df96d31612ed29cc126aa836be3baf7e38b5b",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/2eb213538e5d955f803f8d22c5badc16bc9a231a"
         },
-        "date": 1795682618388,
+        "date": 1795768244121,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 101.53,
-            "extra": "9.33 us/word (baseline 9.19); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.831,
+            "extra": "102.9% of baseline (raw 13.27 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 99.1,
-            "extra": "573.28 us/word (baseline 578.50); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 594.843,
+            "extra": "99.5% of baseline (raw 816.37 vs 820.62 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 1186.4,
-            "extra": "185.36 us/word (baseline 15.62); 26 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 201.447,
+            "extra": "1246.6% of baseline (raw 259.75 vs 20.85 us/word); 26 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -352,26 +352,26 @@ window.BENCHMARK_DATA = {
           "tree_id": "1368d2b35d0869626cc7e581e77add0c8a0db0d4",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/78489d007b470b682e067a2a2db5137f6f6fecde"
         },
-        "date": 1795682647172,
+        "date": 1795768324682,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 98.84,
-            "extra": "9.57 us/word (baseline 9.68); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.534,
+            "extra": "99.8% of baseline (raw 12.87 vs 12.90 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 100.78,
-            "extra": "603.45 us/word (baseline 598.76); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 588.853,
+            "extra": "98.5% of baseline (raw 808.41 vs 820.98 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 244.33,
-            "extra": "39.50 us/word (baseline 16.17); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 40.352,
+            "extra": "249.7% of baseline (raw 52.07 vs 20.85 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -394,44 +394,44 @@ window.BENCHMARK_DATA = {
           "tree_id": "bdfc6447c39d28299490c09620f98441b9ce04db",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/f3c3da934a97d7372921b6063f491e3d1746bef5"
         },
-        "date": 1795682696497,
+        "date": 1795768465055,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 103.38,
-            "extra": "9.63 us/word (baseline 9.31); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.537,
+            "extra": "99.9% of baseline (raw 12.87 vs 12.87 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 100.49,
-            "extra": "587.20 us/word (baseline 584.32); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 597.106,
+            "extra": "99.8% of baseline (raw 820.57 vs 821.39 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 242.64,
-            "extra": "38.20 us/word (baseline 15.74); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 40.886,
+            "extra": "253.0% of baseline (raw 52.99 vs 20.95 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 478.71,
-            "extra": "47.36 us/word (baseline 9.89); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 49.23,
+            "extra": "484.5% of baseline (raw 64.89 vs 13.37 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 478.59,
-            "extra": "153.26 us/word (baseline 32.02); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 156.289,
+            "extra": "485.8% of baseline (raw 203.84 vs 41.96 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 625.72,
-            "extra": "1206.73 us/word (baseline 192.85); 2 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 1161.534,
+            "extra": "599.7% of baseline (raw 1597.30 vs 265.96 us/word); 2 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -454,44 +454,44 @@ window.BENCHMARK_DATA = {
           "tree_id": "05ab1e9c707df09045cf96e1af6b171d940f8851",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/ad4fda7d0ab96d919880f62b1347a5bce963b0a6"
         },
-        "date": 1795682736238,
+        "date": 1795768574382,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 101.93,
-            "extra": "9.72 us/word (baseline 9.53); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.875,
+            "extra": "103.4% of baseline (raw 13.32 vs 12.88 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 100.9,
-            "extra": "595.15 us/word (baseline 589.83); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 598.19,
+            "extra": "100.0% of baseline (raw 820.96 vs 820.72 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 132.51,
-            "extra": "20.93 us/word (baseline 15.79); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 20.767,
+            "extra": "128.5% of baseline (raw 26.80 vs 20.90 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 258.14,
-            "extra": "25.90 us/word (baseline 10.03); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 25.289,
+            "extra": "248.9% of baseline (raw 33.29 vs 13.37 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 256.22,
-            "extra": "79.78 us/word (baseline 31.14); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 80.786,
+            "extra": "251.1% of baseline (raw 105.59 vs 42.05 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 268.58,
-            "extra": "519.65 us/word (baseline 193.48); 2 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 531.949,
+            "extra": "274.7% of baseline (raw 732.21 vs 265.96 us/word); 2 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -514,44 +514,44 @@ window.BENCHMARK_DATA = {
           "tree_id": "a3c2fd45bcbcc500905c6aa0e69f09c469dc0eae",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/0e17bf453dc9e2fa2f232f5a8930ae3d8ff649a2"
         },
-        "date": 1795682776820,
+        "date": 1795768685905,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 105.29,
-            "extra": "9.77 us/word (baseline 9.28); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.536,
+            "extra": "99.9% of baseline (raw 12.88 vs 12.90 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 99.91,
-            "extra": "599.06 us/word (baseline 599.61); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 597.366,
+            "extra": "99.9% of baseline (raw 820.16 vs 820.96 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 126.5,
-            "extra": "20.22 us/word (baseline 15.99); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 20.414,
+            "extra": "126.3% of baseline (raw 26.46 vs 20.95 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 251.32,
-            "extra": "25.51 us/word (baseline 10.15); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 24.772,
+            "extra": "243.8% of baseline (raw 32.66 vs 13.38 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 249.47,
-            "extra": "79.49 us/word (baseline 31.86); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 79.152,
+            "extra": "246.0% of baseline (raw 103.36 vs 42.01 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 317.83,
-            "extra": "613.69 us/word (baseline 193.09); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 633.796,
+            "extra": "327.2% of baseline (raw 870.52 vs 265.59 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -574,44 +574,44 @@ window.BENCHMARK_DATA = {
           "tree_id": "e85377ffd387d03f7de74467374c0a12e89adc36",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/ba1e74881dfcb4e8a89f88f05ad70cf654d92088"
         },
-        "date": 1795682817258,
+        "date": 1795768793140,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 102.94,
-            "extra": "9.63 us/word (baseline 9.36); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.474,
+            "extra": "99.2% of baseline (raw 12.79 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 96.48,
-            "extra": "580.87 us/word (baseline 602.07); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 584.047,
+            "extra": "97.7% of baseline (raw 801.66 vs 820.82 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 96.99,
-            "extra": "15.92 us/word (baseline 16.42); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.25,
+            "extra": "100.6% of baseline (raw 21.18 vs 21.02 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 193.4,
-            "extra": "19.94 us/word (baseline 10.31); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 20.109,
+            "extra": "197.9% of baseline (raw 26.42 vs 13.35 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 198.77,
-            "extra": "64.46 us/word (baseline 32.43); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 66.094,
+            "extra": "205.5% of baseline (raw 86.13 vs 41.94 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 269.36,
-            "extra": "528.82 us/word (baseline 196.32); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 533.672,
+            "extra": "275.5% of baseline (raw 732.02 vs 265.51 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -634,44 +634,44 @@ window.BENCHMARK_DATA = {
           "tree_id": "d9826fc651c269947e9b9bfa3e512ae0f712a4d4",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/70a02380f53a814eda4254b70a44870a16d8f82e"
         },
-        "date": 1795682854488,
+        "date": 1795768891387,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 101.65,
-            "extra": "9.46 us/word (baseline 9.31); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.629,
+            "extra": "100.8% of baseline (raw 13.00 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 101.11,
-            "extra": "588.00 us/word (baseline 581.52); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 592.328,
+            "extra": "99.0% of baseline (raw 812.68 vs 820.26 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 97.11,
-            "extra": "15.61 us/word (baseline 16.08); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.318,
+            "extra": "101.0% of baseline (raw 21.04 vs 20.89 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 189.72,
-            "extra": "19.01 us/word (baseline 10.02); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.347,
+            "extra": "190.4% of baseline (raw 25.53 vs 13.40 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 151.22,
-            "extra": "46.95 us/word (baseline 31.05); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.818,
+            "extra": "148.6% of baseline (raw 62.48 vs 42.04 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 139.84,
-            "extra": "262.39 us/word (baseline 187.64); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 265.47,
+            "extra": "137.1% of baseline (raw 365.43 vs 266.76 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -694,44 +694,44 @@ window.BENCHMARK_DATA = {
           "tree_id": "63537bc94ed7b4250e1c02cb540361d58f167227",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/884e60daf6225c64b13b90bf4f76bb8ac6cfc40a"
         },
-        "date": 1795682892040,
+        "date": 1795768989969,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 102,
-            "extra": "9.57 us/word (baseline 9.38); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.621,
+            "extra": "100.7% of baseline (raw 12.98 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 98.85,
-            "extra": "582.19 us/word (baseline 588.95); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 592.741,
+            "extra": "99.1% of baseline (raw 812.35 vs 820.49 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 98.7,
-            "extra": "15.89 us/word (baseline 16.10); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.28,
+            "extra": "100.7% of baseline (raw 21.03 vs 20.85 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 186.55,
-            "extra": "19.05 us/word (baseline 10.21); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.392,
+            "extra": "190.9% of baseline (raw 25.54 vs 13.36 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 147.98,
-            "extra": "47.46 us/word (baseline 32.07); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.851,
+            "extra": "148.7% of baseline (raw 62.70 vs 42.03 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 135.03,
-            "extra": "261.60 us/word (baseline 193.74); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 266.408,
+            "extra": "137.6% of baseline (raw 365.69 vs 265.68 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -754,44 +754,44 @@ window.BENCHMARK_DATA = {
           "tree_id": "67b87c03fba7f66c35a261265ab0a61493c6683b",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/629b0dae7f56f065b893fbf3eac016088db37769"
         },
-        "date": 1795682929754,
+        "date": 1795769088483,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 100.66,
-            "extra": "9.42 us/word (baseline 9.35); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.617,
+            "extra": "100.7% of baseline (raw 12.99 vs 12.90 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 99.57,
-            "extra": "580.28 us/word (baseline 582.81); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 592.813,
+            "extra": "99.1% of baseline (raw 812.91 vs 820.72 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 99.92,
-            "extra": "15.91 us/word (baseline 15.93); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.333,
+            "extra": "101.1% of baseline (raw 21.08 vs 20.86 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 192.55,
-            "extra": "19.26 us/word (baseline 10.00); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.389,
+            "extra": "190.8% of baseline (raw 25.49 vs 13.35 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 148.69,
-            "extra": "47.22 us/word (baseline 31.76); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.803,
+            "extra": "148.6% of baseline (raw 62.55 vs 42.02 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 136.83,
-            "extra": "263.12 us/word (baseline 192.30); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 266.85,
+            "extra": "137.8% of baseline (raw 366.10 vs 266.06 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -814,44 +814,44 @@ window.BENCHMARK_DATA = {
           "tree_id": "9a127c56f8fd453d6b089eacbe65eeffb1b8c62c",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/5438572b68d91723ecce3609e96977317b087e7e"
         },
-        "date": 1795682967612,
+        "date": 1795769187039,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 100.12,
-            "extra": "9.38 us/word (baseline 9.36); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.631,
+            "extra": "100.8% of baseline (raw 12.99 vs 12.88 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 100.03,
-            "extra": "587.99 us/word (baseline 587.80); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 592.358,
+            "extra": "99.1% of baseline (raw 812.65 vs 820.76 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 103.26,
-            "extra": "16.23 us/word (baseline 15.72); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.247,
+            "extra": "100.5% of baseline (raw 21.04 vs 20.84 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 194.04,
-            "extra": "19.50 us/word (baseline 10.05); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.424,
+            "extra": "191.2% of baseline (raw 25.50 vs 13.34 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 148.98,
-            "extra": "47.61 us/word (baseline 31.96); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.733,
+            "extra": "148.4% of baseline (raw 62.51 vs 42.06 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 141.83,
-            "extra": "268.35 us/word (baseline 189.20); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 267.494,
+            "extra": "138.1% of baseline (raw 366.77 vs 265.53 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -874,44 +874,44 @@ window.BENCHMARK_DATA = {
           "tree_id": "af45976b4b2b59125a3f66d7f28531d01e6de866",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/e0f39622e332292b01a084f347d83404218fb17a"
         },
-        "date": 1795683005651,
+        "date": 1795769285665,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 99.04,
-            "extra": "9.55 us/word (baseline 9.65); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.632,
+            "extra": "100.9% of baseline (raw 12.99 vs 12.88 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 98.49,
-            "extra": "588.99 us/word (baseline 598.04); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 591.763,
+            "extra": "99.0% of baseline (raw 812.69 vs 821.45 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 99.7,
-            "extra": "16.12 us/word (baseline 16.17); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.389,
+            "extra": "101.4% of baseline (raw 21.17 vs 20.88 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 198.2,
-            "extra": "19.94 us/word (baseline 10.06); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.416,
+            "extra": "191.1% of baseline (raw 25.50 vs 13.36 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 149.37,
-            "extra": "48.44 us/word (baseline 32.43); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.8,
+            "extra": "148.6% of baseline (raw 62.40 vs 42.05 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 139.45,
-            "extra": "270.00 us/word (baseline 193.62); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 266.209,
+            "extra": "137.4% of baseline (raw 365.18 vs 265.69 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -934,44 +934,44 @@ window.BENCHMARK_DATA = {
           "tree_id": "2dadab26931fcac209e79a45f8610a86acf93673",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/f6f1961ebd2aea99f95cb6bb82c06ff034c2a47d"
         },
-        "date": 1795683044470,
+        "date": 1795769384285,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 101.44,
-            "extra": "9.75 us/word (baseline 9.61); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.646,
+            "extra": "101.0% of baseline (raw 13.01 vs 12.88 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 98.44,
-            "extra": "592.08 us/word (baseline 601.49); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 592.857,
+            "extra": "99.1% of baseline (raw 812.51 vs 819.74 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 101.27,
-            "extra": "16.45 us/word (baseline 16.25); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.295,
+            "extra": "100.8% of baseline (raw 21.07 vs 20.93 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 191.96,
-            "extra": "19.84 us/word (baseline 10.34); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.369,
+            "extra": "190.6% of baseline (raw 25.50 vs 13.37 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 149.97,
-            "extra": "48.41 us/word (baseline 32.28); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.809,
+            "extra": "148.6% of baseline (raw 62.58 vs 41.99 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 137,
-            "extra": "267.59 us/word (baseline 195.31); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 266.176,
+            "extra": "137.4% of baseline (raw 365.16 vs 265.69 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -994,50 +994,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "d0b796c545bc95818de8bb1b4fa6ce6ff2023693",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/e54500805e85c5157d11383b78ac367bafb4f7bb"
         },
-        "date": 1795683083420,
+        "date": 1795769484723,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 101.64,
-            "extra": "9.77 us/word (baseline 9.61); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.938,
+            "extra": "104.1% of baseline (raw 13.42 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 99.48,
-            "extra": "597.07 us/word (baseline 600.22); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 597.865,
+            "extra": "100.0% of baseline (raw 820.24 vs 820.41 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 99.24,
-            "extra": "16.13 us/word (baseline 16.25); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.259,
+            "extra": "100.6% of baseline (raw 20.96 vs 20.86 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 190.05,
-            "extra": "19.27 us/word (baseline 10.14); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.3,
+            "extra": "190.0% of baseline (raw 25.41 vs 13.38 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 150.56,
-            "extra": "47.58 us/word (baseline 31.60); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.816,
+            "extra": "148.6% of baseline (raw 62.51 vs 42.02 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 140.26,
-            "extra": "265.75 us/word (baseline 189.47); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 267.807,
+            "extra": "138.3% of baseline (raw 367.56 vs 265.79 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 105.41,
-            "extra": "22.43 us/word (baseline 21.28); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 22.274,
+            "extra": "100.5% of baseline (raw 33.31 vs 32.84 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -1060,50 +1060,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "35a5fb47ba15ce87c714b7d0556d496d4066318f",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/cf55a58a387da5a2c049e31ef18e2179e0891668"
         },
-        "date": 1795683122520,
+        "date": 1795769585140,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 101.84,
-            "extra": "9.82 us/word (baseline 9.64); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.964,
+            "extra": "104.3% of baseline (raw 13.42 vs 12.87 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 101.35,
-            "extra": "604.63 us/word (baseline 596.56); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 597.623,
+            "extra": "99.9% of baseline (raw 820.06 vs 820.56 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 98.28,
-            "extra": "16.11 us/word (baseline 16.39); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.237,
+            "extra": "100.5% of baseline (raw 20.94 vs 20.84 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 189.54,
-            "extra": "19.43 us/word (baseline 10.25); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.271,
+            "extra": "189.7% of baseline (raw 25.39 vs 13.36 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 147.96,
-            "extra": "48.16 us/word (baseline 32.55); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.791,
+            "extra": "148.6% of baseline (raw 62.51 vs 42.07 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 136.5,
-            "extra": "266.60 us/word (baseline 195.32); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 267.603,
+            "extra": "138.2% of baseline (raw 367.90 vs 265.81 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 101.38,
-            "extra": "22.39 us/word (baseline 22.09); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 22.211,
+            "extra": "100.2% of baseline (raw 32.64 vs 32.38 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -1126,50 +1126,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "64a7fb681c982f4ee78209d8166bf492fbbd0d53",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/0192d390b1cf0712131795b80b4edc8221f1aad0"
         },
-        "date": 1795683161312,
+        "date": 1795769685609,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 101.64,
-            "extra": "9.64 us/word (baseline 9.49); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.964,
+            "extra": "104.3% of baseline (raw 13.41 vs 12.88 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 97.39,
-            "extra": "587.16 us/word (baseline 602.89); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 596.976,
+            "extra": "99.8% of baseline (raw 819.94 vs 821.36 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 99.6,
-            "extra": "16.05 us/word (baseline 16.11); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.273,
+            "extra": "100.7% of baseline (raw 20.99 vs 20.91 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 187.64,
-            "extra": "19.09 us/word (baseline 10.18); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.334,
+            "extra": "190.3% of baseline (raw 25.42 vs 13.37 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 144.95,
-            "extra": "46.76 us/word (baseline 32.26); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.793,
+            "extra": "148.6% of baseline (raw 62.48 vs 42.04 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 138.76,
-            "extra": "266.47 us/word (baseline 192.03); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 267.267,
+            "extra": "138.0% of baseline (raw 366.89 vs 266.10 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 99.59,
-            "extra": "22.12 us/word (baseline 22.21); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 21.608,
+            "extra": "97.5% of baseline (raw 32.19 vs 33.02 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -1192,50 +1192,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "32a48029857310f3d49cbc649d48b3e094d972f0",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/ee1fc752b01f22dbc22c97378c129440f90c8185"
         },
-        "date": 1795683200195,
+        "date": 1795769786193,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 104.16,
-            "extra": "9.68 us/word (baseline 9.29); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.929,
+            "extra": "104.0% of baseline (raw 13.41 vs 12.90 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 98.14,
-            "extra": "588.36 us/word (baseline 599.49); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 598.166,
+            "extra": "100.0% of baseline (raw 820.32 vs 820.57 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 99.49,
-            "extra": "16.00 us/word (baseline 16.09); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.246,
+            "extra": "100.5% of baseline (raw 20.94 vs 20.83 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 194.11,
-            "extra": "19.69 us/word (baseline 10.15); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.325,
+            "extra": "190.2% of baseline (raw 25.45 vs 13.37 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 153,
-            "extra": "48.34 us/word (baseline 31.59); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 48.037,
+            "extra": "149.3% of baseline (raw 62.51 vs 41.98 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 136.96,
-            "extra": "260.71 us/word (baseline 190.35); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 267.523,
+            "extra": "138.1% of baseline (raw 367.37 vs 265.91 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 102.19,
-            "extra": "21.97 us/word (baseline 21.50); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 22.09,
+            "extra": "99.7% of baseline (raw 32.95 vs 33.07 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -1258,50 +1258,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "11af06a4d0e17002785d907ab4e6ea6ddc3902a8",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/bc6d297f72a00945fa0a01af278f0a77202a0420"
         },
-        "date": 1795683238679,
+        "date": 1795769886676,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 98.78,
-            "extra": "9.50 us/word (baseline 9.62); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.937,
+            "extra": "104.0% of baseline (raw 13.42 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 100.48,
-            "extra": "597.18 us/word (baseline 594.32); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 600.268,
+            "extra": "100.4% of baseline (raw 820.15 vs 819.31 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 102.03,
-            "extra": "16.02 us/word (baseline 15.71); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.267,
+            "extra": "100.7% of baseline (raw 20.98 vs 20.85 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 191.19,
-            "extra": "19.39 us/word (baseline 10.14); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.321,
+            "extra": "190.2% of baseline (raw 25.40 vs 13.36 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 146.63,
-            "extra": "47.18 us/word (baseline 32.18); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.77,
+            "extra": "148.5% of baseline (raw 62.29 vs 41.99 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 133.5,
-            "extra": "256.43 us/word (baseline 192.09); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 268.73,
+            "extra": "138.7% of baseline (raw 368.05 vs 265.54 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 99.6,
-            "extra": "21.74 us/word (baseline 21.83); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 21.83,
+            "extra": "98.5% of baseline (raw 32.50 vs 32.99 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -1324,50 +1324,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "375709e9a18e81e1d471d479d77c014b54dfac33",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/ac136a19733dd448b30ded2ae2458faf8519c6cb"
         },
-        "date": 1795683277588,
+        "date": 1795769987201,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 101.4,
-            "extra": "9.73 us/word (baseline 9.60); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.951,
+            "extra": "104.2% of baseline (raw 13.41 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 100.86,
-            "extra": "605.64 us/word (baseline 600.47); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 597.224,
+            "extra": "99.9% of baseline (raw 820.21 vs 820.93 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 99.45,
-            "extra": "16.19 us/word (baseline 16.28); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.293,
+            "extra": "100.8% of baseline (raw 21.02 vs 20.87 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 192.95,
-            "extra": "19.58 us/word (baseline 10.15); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.228,
+            "extra": "189.3% of baseline (raw 25.37 vs 13.43 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 150,
-            "extra": "48.19 us/word (baseline 32.12); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.84,
+            "extra": "148.7% of baseline (raw 62.39 vs 41.94 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 137.7,
-            "extra": "266.96 us/word (baseline 193.88); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 267.878,
+            "extra": "138.3% of baseline (raw 368.39 vs 265.62 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 99.22,
-            "extra": "22.08 us/word (baseline 22.26); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 22.222,
+            "extra": "100.3% of baseline (raw 32.88 vs 32.37 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -1390,50 +1390,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "e6d59c86453ea1cab11d074dcf593b1d69bfedbc",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/245d527c2f97002a4c5fff5a917f7cedb3131890"
         },
-        "date": 1795683316345,
+        "date": 1795770087609,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 101.86,
-            "extra": "9.78 us/word (baseline 9.60); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.962,
+            "extra": "104.3% of baseline (raw 13.44 vs 12.88 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 101.23,
-            "extra": "603.77 us/word (baseline 596.44); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 597.224,
+            "extra": "99.9% of baseline (raw 819.76 vs 820.75 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 99.74,
-            "extra": "16.40 us/word (baseline 16.44); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.266,
+            "extra": "100.7% of baseline (raw 20.99 vs 20.84 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 193.54,
-            "extra": "19.89 us/word (baseline 10.28); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.254,
+            "extra": "189.5% of baseline (raw 25.37 vs 13.38 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 152,
-            "extra": "48.76 us/word (baseline 32.08); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.696,
+            "extra": "148.3% of baseline (raw 62.37 vs 42.01 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 138.02,
-            "extra": "269.43 us/word (baseline 195.21); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 267.749,
+            "extra": "138.2% of baseline (raw 367.05 vs 265.87 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 98.26,
-            "extra": "21.85 us/word (baseline 22.24); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 22.169,
+            "extra": "100.0% of baseline (raw 32.69 vs 32.83 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -1456,50 +1456,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "674b92f74f4c211330685990ba0d012c30d5c158",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/1b23b507dfcf2242b4a71edae1e66d8e40cc09f2"
         },
-        "date": 1795683355125,
+        "date": 1795770188003,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 101.96,
-            "extra": "9.74 us/word (baseline 9.55); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.94,
+            "extra": "104.1% of baseline (raw 13.41 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 100.4,
-            "extra": "603.14 us/word (baseline 600.73); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 598.074,
+            "extra": "100.0% of baseline (raw 820.00 vs 820.01 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 98.97,
-            "extra": "16.21 us/word (baseline 16.38); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.273,
+            "extra": "100.7% of baseline (raw 21.00 vs 20.83 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 192.43,
-            "extra": "19.67 us/word (baseline 10.22); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.335,
+            "extra": "190.3% of baseline (raw 25.38 vs 13.34 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 149.87,
-            "extra": "48.35 us/word (baseline 32.26); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.879,
+            "extra": "148.8% of baseline (raw 62.50 vs 41.91 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 137.1,
-            "extra": "266.74 us/word (baseline 194.55); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 266.656,
+            "extra": "137.7% of baseline (raw 367.22 vs 265.88 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 101.18,
-            "extra": "22.42 us/word (baseline 22.15); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 21.925,
+            "extra": "98.9% of baseline (raw 32.36 vs 33.27 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -1522,50 +1522,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "49dd4f28f80a7dc2a77e029942214cd5027a45a2",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/7bd3b6d46ebdedb48e3b1ae0e1cf870c886c5aef"
         },
-        "date": 1795683393934,
+        "date": 1795770288396,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 100,
-            "extra": "9.57 us/word (baseline 9.57); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.936,
+            "extra": "104.0% of baseline (raw 13.45 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 99.81,
-            "extra": "593.43 us/word (baseline 594.55); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 599.125,
+            "extra": "100.2% of baseline (raw 820.72 vs 819.87 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 100.9,
-            "extra": "16.30 us/word (baseline 16.16); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.23,
+            "extra": "100.4% of baseline (raw 20.96 vs 20.86 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 193.56,
-            "extra": "19.67 us/word (baseline 10.16); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.255,
+            "extra": "189.5% of baseline (raw 25.38 vs 13.37 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 150.38,
-            "extra": "48.21 us/word (baseline 32.06); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.746,
+            "extra": "148.4% of baseline (raw 62.48 vs 42.05 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 139.51,
-            "extra": "269.12 us/word (baseline 192.91); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 268.181,
+            "extra": "138.5% of baseline (raw 368.09 vs 265.84 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 102.63,
-            "extra": "22.48 us/word (baseline 21.91); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 22.738,
+            "extra": "102.6% of baseline (raw 33.23 vs 32.39 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -1588,50 +1588,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "5f88c88c280ef80c49764eaf43e88b00f15c841c",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/2b6e14a4cd7d9539992fa52114d6a13b0fbf6538"
         },
-        "date": 1795683432985,
+        "date": 1795770388975,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 100.8,
-            "extra": "9.72 us/word (baseline 9.64); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.969,
+            "extra": "104.4% of baseline (raw 13.45 vs 12.88 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 100.14,
-            "extra": "603.28 us/word (baseline 602.42); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 598.105,
+            "extra": "100.0% of baseline (raw 820.72 vs 820.52 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 101.52,
-            "extra": "16.27 us/word (baseline 16.03); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 15.977,
+            "extra": "98.9% of baseline (raw 21.02 vs 21.26 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 194.57,
-            "extra": "19.82 us/word (baseline 10.19); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.325,
+            "extra": "190.2% of baseline (raw 25.41 vs 13.36 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 149.21,
-            "extra": "48.07 us/word (baseline 32.22); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.826,
+            "extra": "148.7% of baseline (raw 62.51 vs 42.03 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 137.33,
-            "extra": "267.82 us/word (baseline 195.02); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 267.988,
+            "extra": "138.4% of baseline (raw 368.01 vs 266.04 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 99.22,
-            "extra": "22.19 us/word (baseline 22.36); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 22.249,
+            "extra": "100.4% of baseline (raw 32.59 vs 32.33 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -1654,50 +1654,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "dc198f61a13616c1c4397c6d6cd192f4bf4ba554",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/ed9e24012801e4cecd67de47b95e222574661b47"
         },
-        "date": 1795683472139,
+        "date": 1795770489414,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 101.01,
-            "extra": "9.74 us/word (baseline 9.64); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.944,
+            "extra": "104.1% of baseline (raw 13.41 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 102.46,
-            "extra": "606.79 us/word (baseline 592.24); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 597.486,
+            "extra": "99.9% of baseline (raw 820.26 vs 820.96 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 101.09,
-            "extra": "16.34 us/word (baseline 16.16); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.263,
+            "extra": "100.6% of baseline (raw 20.99 vs 20.85 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 196.27,
-            "extra": "19.82 us/word (baseline 10.10); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.32,
+            "extra": "190.2% of baseline (raw 25.42 vs 13.36 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 152.31,
-            "extra": "48.99 us/word (baseline 32.17); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.877,
+            "extra": "148.8% of baseline (raw 62.51 vs 42.03 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 139.55,
-            "extra": "268.85 us/word (baseline 192.65); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 267.375,
+            "extra": "138.0% of baseline (raw 366.62 vs 265.93 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 100.05,
-            "extra": "22.11 us/word (baseline 22.09); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 22.561,
+            "extra": "101.8% of baseline (raw 32.99 vs 32.51 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -1720,50 +1720,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "b4f1cdb060c4d4583d96451a30ae79d6e81e6e43",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/f7bd72b1a960a10206271e017520953e7fbbbf98"
         },
-        "date": 1795683512140,
+        "date": 1795770589945,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 101.95,
-            "extra": "9.89 us/word (baseline 9.70); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.954,
+            "extra": "104.2% of baseline (raw 13.45 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 100.87,
-            "extra": "608.95 us/word (baseline 603.68); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 598.178,
+            "extra": "100.0% of baseline (raw 820.61 vs 820.77 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 99.85,
-            "extra": "16.24 us/word (baseline 16.27); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.275,
+            "extra": "100.7% of baseline (raw 20.96 vs 20.83 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 191.51,
-            "extra": "19.69 us/word (baseline 10.28); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.304,
+            "extra": "190.0% of baseline (raw 25.42 vs 13.37 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 150.32,
-            "extra": "48.83 us/word (baseline 32.48); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.827,
+            "extra": "148.7% of baseline (raw 62.42 vs 42.00 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 138.22,
-            "extra": "268.55 us/word (baseline 194.29); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 267.131,
+            "extra": "137.9% of baseline (raw 367.25 vs 266.37 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 98.81,
-            "extra": "22.15 us/word (baseline 22.41); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 22.116,
+            "extra": "99.8% of baseline (raw 32.98 vs 33.04 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -1786,50 +1786,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "4f57ba92fb0243e049c9d4c40ba17f895186a366",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/4c8ecf38ca7e88147031580e39a3d0306ee77c01"
         },
-        "date": 1795683552025,
+        "date": 1795770690457,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 100.2,
-            "extra": "9.74 us/word (baseline 9.72); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.916,
+            "extra": "103.8% of baseline (raw 13.41 vs 12.91 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 100.34,
-            "extra": "601.08 us/word (baseline 599.02); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 597.337,
+            "extra": "99.9% of baseline (raw 820.07 vs 820.83 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 100.26,
-            "extra": "16.38 us/word (baseline 16.34); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.258,
+            "extra": "100.6% of baseline (raw 21.09 vs 20.88 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 195.98,
-            "extra": "19.69 us/word (baseline 10.05); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 19.341,
+            "extra": "190.4% of baseline (raw 25.43 vs 13.36 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 148.85,
-            "extra": "48.46 us/word (baseline 32.56); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 47.903,
+            "extra": "148.9% of baseline (raw 62.51 vs 42.01 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 136.58,
-            "extra": "266.67 us/word (baseline 195.25); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 267.555,
+            "extra": "138.1% of baseline (raw 366.75 vs 265.68 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 100.79,
-            "extra": "22.28 us/word (baseline 22.11); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 21.795,
+            "extra": "98.4% of baseline (raw 32.44 vs 32.77 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -1852,50 +1852,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "e1283b23e7b6365230c3d9018d553bcc5b8ef6bb",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/77397a7375e7841959a72bb05c15535c4907b126"
         },
-        "date": 1795683589766,
+        "date": 1795770784896,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 99.68,
-            "extra": "9.72 us/word (baseline 9.75); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.554,
+            "extra": "100.0% of baseline (raw 12.90 vs 12.88 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 100.14,
-            "extra": "607.73 us/word (baseline 606.88); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 595.265,
+            "extra": "99.5% of baseline (raw 817.54 vs 821.23 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 99.52,
-            "extra": "16.34 us/word (baseline 16.42); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.128,
+            "extra": "99.8% of baseline (raw 20.84 vs 20.87 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 100.34,
-            "extra": "10.35 us/word (baseline 10.32); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 10.156,
+            "extra": "100.0% of baseline (raw 13.36 vs 13.36 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 99.99,
-            "extra": "32.47 us/word (baseline 32.47); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 32.148,
+            "extra": "99.9% of baseline (raw 42.01 vs 42.04 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 100.37,
-            "extra": "196.59 us/word (baseline 195.87); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 193.319,
+            "extra": "99.8% of baseline (raw 265.62 vs 265.90 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 99.78,
-            "extra": "22.22 us/word (baseline 22.27); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 22.691,
+            "extra": "102.4% of baseline (raw 32.98 vs 32.20 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -1918,50 +1918,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "6d849e1639ff39648ece4695a7edcf0dc8d0cb2d",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/606b78af367a97cd386820ffc5010c3fbab02126"
         },
-        "date": 1795683627209,
+        "date": 1795770879278,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 99.26,
-            "extra": "9.74 us/word (baseline 9.81); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.545,
+            "extra": "99.9% of baseline (raw 12.88 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 100.18,
-            "extra": "610.95 us/word (baseline 609.86); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 598.106,
+            "extra": "100.0% of baseline (raw 820.44 vs 820.60 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 99.2,
-            "extra": "16.64 us/word (baseline 16.78); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.266,
+            "extra": "100.7% of baseline (raw 20.91 vs 20.83 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 98.62,
-            "extra": "10.48 us/word (baseline 10.62); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 10.169,
+            "extra": "100.1% of baseline (raw 13.35 vs 13.36 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 99.36,
-            "extra": "33.18 us/word (baseline 33.39); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 32.074,
+            "extra": "99.7% of baseline (raw 41.90 vs 42.00 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 99.85,
-            "extra": "199.16 us/word (baseline 199.45); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 194.043,
+            "extra": "100.2% of baseline (raw 266.30 vs 265.88 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 100.4,
-            "extra": "22.32 us/word (baseline 22.23); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 21.714,
+            "extra": "98.0% of baseline (raw 32.22 vs 32.85 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -1984,50 +1984,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "6c8ee5be698cfcf3b807114649d8efc88ed6624e",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/179e6b2045ed92e0083cef39068e0972f93ec365"
         },
-        "date": 1795683665109,
+        "date": 1795770973707,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 102.25,
-            "extra": "9.72 us/word (baseline 9.50); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.565,
+            "extra": "100.2% of baseline (raw 12.89 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 101.46,
-            "extra": "603.67 us/word (baseline 594.99); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 598.072,
+            "extra": "100.0% of baseline (raw 819.39 vs 819.93 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 99.8,
-            "extra": "16.23 us/word (baseline 16.27); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.114,
+            "extra": "99.7% of baseline (raw 20.85 vs 20.87 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 98.83,
-            "extra": "10.13 us/word (baseline 10.25); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 10.202,
+            "extra": "100.4% of baseline (raw 13.40 vs 13.35 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 99.11,
-            "extra": "31.93 us/word (baseline 32.21); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 32.284,
+            "extra": "100.4% of baseline (raw 42.06 vs 41.99 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 96.9,
-            "extra": "190.87 us/word (baseline 196.98); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 193.707,
+            "extra": "100.0% of baseline (raw 266.15 vs 266.11 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 98.84,
-            "extra": "22.02 us/word (baseline 22.27); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 22.102,
+            "extra": "99.7% of baseline (raw 32.65 vs 32.72 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -2050,50 +2050,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "2b8a5b6ff57f55315eaff5d3e44726f41eec8954",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/194c5c454e5aea79099f94235b3c747ff9fdf1c0"
         },
-        "date": 1795683702519,
+        "date": 1795771068141,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 100.57,
-            "extra": "9.61 us/word (baseline 9.55); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.54,
+            "extra": "99.9% of baseline (raw 12.87 vs 12.90 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 98.31,
-            "extra": "587.88 us/word (baseline 597.99); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 598.393,
+            "extra": "100.1% of baseline (raw 820.45 vs 819.78 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 100.16,
-            "extra": "16.10 us/word (baseline 16.07); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.127,
+            "extra": "99.8% of baseline (raw 20.82 vs 20.85 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 102.45,
-            "extra": "10.27 us/word (baseline 10.02); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 10.165,
+            "extra": "100.0% of baseline (raw 13.33 vs 13.34 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 100.4,
-            "extra": "31.82 us/word (baseline 31.69); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 32.173,
+            "extra": "100.0% of baseline (raw 41.91 vs 41.93 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 99.15,
-            "extra": "190.09 us/word (baseline 191.72); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 193.423,
+            "extra": "99.9% of baseline (raw 265.49 vs 265.82 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 99.48,
-            "extra": "21.63 us/word (baseline 21.75); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 22.308,
+            "extra": "100.7% of baseline (raw 33.24 vs 33.19 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -2116,50 +2116,182 @@ window.BENCHMARK_DATA = {
           "tree_id": "6a04c91592717a5a4824e6eb7246c08d82b169d8",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/fee9cfbfb1ba5016178f9e068d3bb31dec8511a7"
         },
-        "date": 1795683739815,
+        "date": 1795771162641,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "unit": "% of baseline",
-            "value": 98.74,
-            "extra": "9.63 us/word (baseline 9.75); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 9.548,
+            "extra": "100.0% of baseline (raw 12.89 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "unit": "% of baseline",
-            "value": 100.07,
-            "extra": "601.77 us/word (baseline 601.33); 0 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 597.852,
+            "extra": "100.0% of baseline (raw 820.47 vs 820.69 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 98.63,
-            "extra": "16.31 us/word (baseline 16.54); 25 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 16.192,
+            "extra": "100.2% of baseline (raw 20.84 vs 20.82 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "unit": "% of baseline",
-            "value": 98.14,
-            "extra": "10.20 us/word (baseline 10.39); 1 / 4000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 10.169,
+            "extra": "100.1% of baseline (raw 13.36 vs 13.37 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "unit": "% of baseline",
-            "value": 98.39,
-            "extra": "32.41 us/word (baseline 32.94); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 32.121,
+            "extra": "99.8% of baseline (raw 42.04 vs 42.10 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "unit": "% of baseline",
-            "value": 100.13,
-            "extra": "195.30 us/word (baseline 195.05); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 193.596,
+            "extra": "100.0% of baseline (raw 265.73 vs 265.44 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "unit": "% of baseline",
-            "value": 99.53,
-            "extra": "22.06 us/word (baseline 22.16); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+            "unit": "us/word",
+            "value": 21.899,
+            "extra": "98.8% of baseline (raw 32.70 vs 32.91 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "bomot113@gmail.com",
+            "name": "Tue Bui",
+            "username": "btue113"
+          },
+          "committer": {
+            "email": "bomot113@gmail.com",
+            "name": "Tue Bui",
+            "username": "btue113"
+          },
+          "distinct": true,
+          "id": "faf74730677ad62a4a54ea4310f05e2eb3809eba",
+          "message": "Polish README badges, scratch methods, cheap first pass, and contributing link",
+          "timestamp": "2026-11-26T15:59:44-08:00",
+          "tree_id": "57820459e3592c3ae12a19dc24aea53fcf5a8cdf",
+          "url": "https://github.com/btue113/ECC-HyperCube/commit/faf74730677ad62a4a54ea4310f05e2eb3809eba"
+        },
+        "date": 1795771257202,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "hard decode (255,163) 7 flips",
+            "unit": "us/word",
+            "value": 9.543,
+            "extra": "99.9% of baseline (raw 12.88 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "hard decode (4095,2510) 31 flips",
+            "unit": "us/word",
+            "value": 598.379,
+            "extra": "100.1% of baseline (raw 820.12 vs 820.17 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
+            "unit": "us/word",
+            "value": 16.107,
+            "extra": "99.7% of baseline (raw 20.80 vs 20.85 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
+            "unit": "us/word",
+            "value": 10.155,
+            "extra": "100.0% of baseline (raw 13.36 vs 13.36 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
+            "unit": "us/word",
+            "value": 32.1,
+            "extra": "99.8% of baseline (raw 41.95 vs 42.12 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
+            "unit": "us/word",
+            "value": 193.85,
+            "extra": "100.1% of baseline (raw 265.98 vs 265.61 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "GLDPC (1024,513) 2.0 dB",
+            "unit": "us/word",
+            "value": 21.77,
+            "extra": "98.2% of baseline (raw 32.47 vs 32.88 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "bomot113@gmail.com",
+            "name": "Tue Bui",
+            "username": "btue113"
+          },
+          "committer": {
+            "email": "bomot113@gmail.com",
+            "name": "Tue Bui",
+            "username": "btue113"
+          },
+          "distinct": true,
+          "id": "25ceb05ec1653eeb422ec02dd01c7f80fecc1798",
+          "message": "Perf: chart normalized us/word and stabilize CI benchmark runs",
+          "timestamp": "2026-11-26T15:59:44-08:00",
+          "tree_id": "aa3f277968da078cb04c73c170c2a773c453f58b",
+          "url": "https://github.com/btue113/ECC-HyperCube/commit/25ceb05ec1653eeb422ec02dd01c7f80fecc1798"
+        },
+        "date": 1795771351649,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "hard decode (255,163) 7 flips",
+            "unit": "us/word",
+            "value": 9.548,
+            "extra": "100.0% of baseline (raw 12.89 vs 12.89 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "hard decode (4095,2510) 31 flips",
+            "unit": "us/word",
+            "value": 597.646,
+            "extra": "99.9% of baseline (raw 819.73 vs 820.43 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
+            "unit": "us/word",
+            "value": 16.164,
+            "extra": "100.0% of baseline (raw 20.86 vs 20.88 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
+            "unit": "us/word",
+            "value": 10.162,
+            "extra": "100.0% of baseline (raw 13.36 vs 13.36 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
+            "unit": "us/word",
+            "value": 32.23,
+            "extra": "100.2% of baseline (raw 42.06 vs 41.95 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
+            "unit": "us/word",
+            "value": 193.959,
+            "extra": "100.1% of baseline (raw 265.95 vs 265.73 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "GLDPC (1024,513) 2.0 dB",
+            "unit": "us/word",
+            "value": 22.375,
+            "extra": "101.0% of baseline (raw 32.73 vs 32.31 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       },
@@ -2182,50 +2314,50 @@ window.BENCHMARK_DATA = {
           "tree_id": "040bd2e8212258b16c1b88f100fc395a6c3d5d98",
           "url": "https://github.com/btue113/ECC-HyperCube/commit/dc7b4dedacc411c4facffd281617ec92531b77eb"
         },
-        "date": 1795766995170,
+        "date": 1795771445997,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
             "name": "hard decode (255,163) 7 flips",
-            "value": 9.543,
             "unit": "us/word",
-            "extra": "99.9% of baseline (raw 15.40 vs 15.41 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+            "value": 9.556,
+            "extra": "100.1% of baseline (raw 12.89 vs 12.88 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "hard decode (4095,2510) 31 flips",
-            "value": 598.224,
             "unit": "us/word",
-            "extra": "100.0% of baseline (raw 982.27 vs 978.77 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+            "value": 598.057,
+            "extra": "100.0% of baseline (raw 820.44 vs 820.38 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
-            "value": 16.151,
             "unit": "us/word",
-            "extra": "99.9% of baseline (raw 24.90 vs 24.93 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+            "value": 16.166,
+            "extra": "100.0% of baseline (raw 20.84 vs 20.80 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
-            "value": 10.152,
             "unit": "us/word",
-            "extra": "99.9% of baseline (raw 16.00 vs 16.03 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+            "value": 10.146,
+            "extra": "99.9% of baseline (raw 13.35 vs 13.37 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
-            "value": 32.01,
             "unit": "us/word",
-            "extra": "99.5% of baseline (raw 50.30 vs 50.51 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+            "value": 32.197,
+            "extra": "100.1% of baseline (raw 41.93 vs 41.91 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
-            "value": 193.976,
             "unit": "us/word",
-            "extra": "100.2% of baseline (raw 318.44 vs 318.01 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+            "value": 193.682,
+            "extra": "100.0% of baseline (raw 265.63 vs 265.47 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           },
           {
             "name": "GLDPC (1024,513) 2.0 dB",
-            "value": 22.195,
             "unit": "us/word",
-            "extra": "100.2% of baseline (raw 39.04 vs 38.90 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+            "value": 22.273,
+            "extra": "100.5% of baseline (raw 32.89 vs 32.72 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       }
