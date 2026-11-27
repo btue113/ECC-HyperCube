@@ -2308,11 +2308,11 @@ window.BENCHMARK_DATA = {
             "username": "btue113"
           },
           "distinct": true,
-          "id": "dc7b4dedacc411c4facffd281617ec92531b77eb",
-          "message": "Perf: pin runs to core 1, note REF_BASE_US next to PERF_BASELINE\n\nCore 0 handles most interrupts on Linux runners, so pin perf_ci to core 1 (core 0\non a single-core machine). Changing PERF_BASELINE also requires updating\nREF_BASE_US; say so in perf.yml. Ignore ci/__pycache__/.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>",
+          "id": "75acfd4a31720444655bf033951bfbb56fa7468a",
+          "message": "Perf: pin runs to core 1, note REF_BASE_US next to PERF_BASELINE\n\nCore 0 handles most interrupts on Linux runners, so pin perf_ci to core 1 (core 0\non a single-core machine). Changing PERF_BASELINE also requires updating\nREF_BASE_US; say so in perf.yml. Ignore ci/__pycache__/.",
           "timestamp": "2026-11-27T00:07:23-08:00",
           "tree_id": "040bd2e8212258b16c1b88f100fc395a6c3d5d98",
-          "url": "https://github.com/btue113/ECC-HyperCube/commit/dc7b4dedacc411c4facffd281617ec92531b77eb"
+          "url": "https://github.com/btue113/ECC-HyperCube/commit/75acfd4a31720444655bf033951bfbb56fa7468a"
         },
         "date": 1795771445997,
         "tool": "customSmallerIsBetter",
