@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795683741118,
+  "lastUpdate": 1795766995536,
   "repoUrl": "https://github.com/btue113/ECC-HyperCube",
   "entries": {
     "ecc-hypercube decode time": [
@@ -700,7 +700,7 @@ window.BENCHMARK_DATA = {
           {
             "name": "hard decode (255,163) 7 flips",
             "unit": "% of baseline",
-            "value": 102.0,
+            "value": 102,
             "extra": "9.57 us/word (baseline 9.38); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
           },
           {
@@ -970,7 +970,7 @@ window.BENCHMARK_DATA = {
           {
             "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
             "unit": "% of baseline",
-            "value": 137.0,
+            "value": 137,
             "extra": "267.59 us/word (baseline 195.31); 1 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
           }
         ]
@@ -1222,7 +1222,7 @@ window.BENCHMARK_DATA = {
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
             "unit": "% of baseline",
-            "value": 153.0,
+            "value": 153,
             "extra": "48.34 us/word (baseline 31.59); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
           },
           {
@@ -1354,7 +1354,7 @@ window.BENCHMARK_DATA = {
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
             "unit": "% of baseline",
-            "value": 150.0,
+            "value": 150,
             "extra": "48.19 us/word (baseline 32.12); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
           },
           {
@@ -1420,7 +1420,7 @@ window.BENCHMARK_DATA = {
           {
             "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
             "unit": "% of baseline",
-            "value": 152.0,
+            "value": 152,
             "extra": "48.76 us/word (baseline 32.08); 0 / 2000 word errors; AMD EPYC 9V45 96-Core Processor"
           },
           {
@@ -1528,7 +1528,7 @@ window.BENCHMARK_DATA = {
           {
             "name": "hard decode (255,163) 7 flips",
             "unit": "% of baseline",
-            "value": 100.0,
+            "value": 100,
             "extra": "9.57 us/word (baseline 9.57); 0 / 20000 word errors; AMD EPYC 9V45 96-Core Processor"
           },
           {
@@ -2160,6 +2160,72 @@ window.BENCHMARK_DATA = {
             "unit": "% of baseline",
             "value": 99.53,
             "extra": "22.06 us/word (baseline 22.16); 8 / 500 word errors; AMD EPYC 9V45 96-Core Processor"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "bomot113@gmail.com",
+            "name": "Tue Bui",
+            "username": "btue113"
+          },
+          "committer": {
+            "email": "bomot113@gmail.com",
+            "name": "Tue Bui",
+            "username": "btue113"
+          },
+          "distinct": true,
+          "id": "dc7b4dedacc411c4facffd281617ec92531b77eb",
+          "message": "Perf: pin runs to core 1, note REF_BASE_US next to PERF_BASELINE\n\nCore 0 handles most interrupts on Linux runners, so pin perf_ci to core 1 (core 0\non a single-core machine). Changing PERF_BASELINE also requires updating\nREF_BASE_US; say so in perf.yml. Ignore ci/__pycache__/.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-27T00:07:23-08:00",
+          "tree_id": "040bd2e8212258b16c1b88f100fc395a6c3d5d98",
+          "url": "https://github.com/btue113/ECC-HyperCube/commit/dc7b4dedacc411c4facffd281617ec92531b77eb"
+        },
+        "date": 1795766995170,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "hard decode (255,163) 7 flips",
+            "value": 9.543,
+            "unit": "us/word",
+            "extra": "99.9% of baseline (raw 15.40 vs 15.41 us/word); 0 / 20000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "hard decode (4095,2510) 31 flips",
+            "value": 598.224,
+            "unit": "us/word",
+            "extra": "100.0% of baseline (raw 982.27 vs 978.77 us/word); 0 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "RM(3,7) (128,64) SCL-8 3.0 dB",
+            "value": 16.151,
+            "unit": "us/word",
+            "extra": "99.9% of baseline (raw 24.90 vs 24.93 us/word); 25 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "RM(3,7) (128,64) ensemble 8x8 3.0 dB",
+            "value": 10.152,
+            "unit": "us/word",
+            "extra": "99.9% of baseline (raw 16.00 vs 16.03 us/word); 1 / 4000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "RM(4,8) (256,163) ensemble 8x8 3.5 dB",
+            "value": 32.01,
+            "unit": "us/word",
+            "extra": "99.5% of baseline (raw 50.30 vs 50.51 us/word); 0 / 2000 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "RM(4,9) (512,256) ensemble 4x16 3.0 dB",
+            "value": 193.976,
+            "unit": "us/word",
+            "extra": "100.2% of baseline (raw 318.44 vs 318.01 us/word); 1 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
+          },
+          {
+            "name": "GLDPC (1024,513) 2.0 dB",
+            "value": 22.195,
+            "unit": "us/word",
+            "extra": "100.2% of baseline (raw 39.04 vs 38.90 us/word); 8 / 500 word errors; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)"
           }
         ]
       }
