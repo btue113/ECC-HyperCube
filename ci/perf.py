@@ -5,7 +5,7 @@ GitHub's `ubuntu-latest` runners come in several CPU speeds (1.3-1.6x apart), so
 timings jump whenever a job lands on different hardware. Every measurement here therefore
 builds two programs from today's examples/perf_ci.rs - one against the commit under test, one
 against a pinned baseline commit - runs them in paired alternating rounds pinned to one core
-(`taskset -c 0`), takes the median per-round ratio `t_rev / t_base`, and scales it by the
+(`taskset -c 1`), takes the median per-round ratio `t_rev / t_base`, and scales it by the
 baseline's reference `us/word` (`REF_BASE_US`). The chart stays in readable `us/word` while
 runner speed cancels out.
 
@@ -156,7 +156,7 @@ def run_bin(binary, work):
     out = os.path.join(work, "perf-run.json")
     cmd = [binary, out]
     if shutil.which("taskset"):
-        cmd = ["taskset", "-c", "0", *cmd]
+        cmd = ["taskset", "-c", "1" if (os.cpu_count() or 1) > 1 else "0", *cmd]  # core 0 takes most interrupts
     res = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
     if res.returncode != 0:
         print(res.stderr[-2000:], file=sys.stderr)

@@ -20,7 +20,8 @@ permissions:
 
 env:
   # Newest commit with every workload when baseline timing was introduced. Changing it changes
-  # the unit of the whole history: re-run the Perf backfill workflow afterwards.
+  # the unit of the whole history: update REF_BASE_US in ci/perf.py to the new baseline's
+  # us/word, then re-run the Perf backfill workflow.
   PERF_BASELINE: 179e6b2045ed92e0083cef39068e0972f93ec365
   # Pin rustc so LLVM upgrades don't introduce step changes; keep in sync with perf-backfill.yml.
   RUST_TOOLCHAIN: "1.99.0"
